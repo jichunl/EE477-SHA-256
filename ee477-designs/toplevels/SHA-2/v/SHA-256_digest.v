@@ -15,16 +15,16 @@
 // 	v_o:		Indicate that the module has produced a valid output
 // 	digest_o: 	The result of hashing the message
 module sha256_digest
-	(input	wire		clk_i
-	,input  wire 		reset_i
+	(//input	wire		clk_i
+	//,input  wire 		reset_i
 	,input  	[255:0] message_i
-	,input       		v_i 		
-	,input 	    		yumi_i
+	//,input       		v_i 		
+	//,input 	    		yumi_i
 	,input 		[31:0]	Kt_i
 	,input		[31:0]  Wt_i
 	
-	,output 		ready_o 		 
-	,output wire 		v_o 		
+	//,output 		ready_o 		 
+	//,output wire 		v_o 		
 	,output      	[255:0]	digest_o 	
 	);
 
