@@ -24,8 +24,8 @@ module message scheduler
 	
 	// compute values for rest of w
 	for (i = 16; i < 64; i++) begin
-		s0 = ({w[i - 15][6:0], w[i-15][31:7]}) ^ ({w[i - 15][17:0] - w[i - 15][31:18]) ^ (w[i - 15] >> 3);
-		s1 = ({w[i - 2][16:0], w[i-2][31:17]}) ^ ({w[i - 2][18:0]  - w[i - 2][31:19] ) ^ (w[i - 2] >> 10);
+		msg_sch_sigma_0 sigma0(.word_i(w[i - 15][31:0]), .s0_o(s0));
+		msg_sch_sigma_1 sigma1(.word_i(w[i - 2][31:0]),  .s1_o(s1)); 
 		w[i] = w[i - 16] + s0+ w[i - 7] + s1;
 	end
 	assign Wt_o = w; 
