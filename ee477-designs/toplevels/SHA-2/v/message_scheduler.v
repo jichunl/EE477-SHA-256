@@ -10,36 +10,47 @@ module message scheduler
 	(input 	[511:0] M_i 
 	,input 		clk_i
 	
-	,output [31:0] 	Wt_o 
+	,output [63:0][31:0] 	Wt_o 
 	);
         
-// Temp registers for storing the M_values
-	reg 
+// Create word array
+	reg [63:0][31:0] w;
+        // copy the chunk into first 16 words to word array
+	for (i = 0; i < 16; i++) begin
+		w[i][31:0] = M_i[16 * i + 15 : i * 16];
+	end
 	
-	always_ff@(posedge clk_i)
+	reg [31:0] s0, s1;
 	
+	// compute values for rest of w
+	for (i = 16; i < 64; i++) begin
+		s0 = ({w[i - 15][6:0], w[i-15][31:7]}) ^ ({w[i - 15][17:0] - w[i - 15][31:18]) ^ (w[i - 15] >> 3);
+		s1 = ({w[i - 2][16:0], w[i-2][31:17]}) ^ ({w[i - 2][18:0]  - w[i - 2][31:19] ) ^ (w[i - 2] >> 10);
+		w[i] = w[i - 16] + s0+ w[i - 7] + s1;
+	end
+	assign Wt_o = w; 
 endmodule 
 
 // This is the sigma_0 function for the message scheduler
 // 
 // input:
-// 	M_i:
+// 	word_i:
 //	
 // output:
 // 	msg_sch_sigma_0:
 module msg_sch_sigma_0
-	(input 	[31:0] M_i
+	(input 	[31:0] word_i
 	
-	,output msg_sch_sigma_0_o
+	,output [31:0] s0_o
 	);
 	
-	reg [31:0] msg_7, msg_18, msg_3;
+	reg [31:0] word_7, word_18, word_3;
 
-	assign msg_7 	= M_i >> 7;
-	assign msg_18 	= M_i >> 18;
-	assign msg_3	= M_i >> 3;
+	assign word_7 	= {word_i[6:0],  word_i[31:7]};
+	assign word_18 	= {word_i[17:0], word_i[31:18]};
+	assign word_3	= word_i >> 3;
 	
-	assign msg_sch_sigma_0_o = (msg_7 ^ msg_18) ^ msg_3;
+	assign msg_sch_sigma_0_o = (word_7 ^ word_18) ^ word_3;
 endmodule
 
 // This is the sigma_1 function for the message scheduler
@@ -50,16 +61,16 @@ endmodule
 // output:
 // 	msg_sch_sigma_1:
 module msg_sch_sigma_1
-	(input 	[31:0]	M_i
+	(input 	[31:0]	word_i
 	
-	,output [31:0]	msg_sch_sigma_1_o
+	,output [31:0]	s1_o
 	);
 	
-	reg 	[31:0] 	msg_17, msg_19, msg_10; 
+	reg 	[31:0] 	word_17, word_19, word_10; 
 	
-	assign msg_17 	= M_i >> 17;
-	assign msg_19 	= M_i >> 19;
-	assign msg_10	= M_i >> 10;
+	assign word_17 	= {word_i[16:0], word_i[31:17]};
+	assign word_19 	= {word_i[18_0], word_i[31:19]};
+	assign word_10	= word_i >> 10;
 
-	assign msg_sch_sigma_1_o = (msg_17 ^ msg_19) ^ msg_10;
+	assign s1_o = (word_17 ^ word_19) ^ word_10;
 endmodule
