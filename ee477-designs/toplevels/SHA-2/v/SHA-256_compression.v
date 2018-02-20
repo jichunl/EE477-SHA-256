@@ -120,7 +120,11 @@ module sigma_0
 	,output reg [31:0] sigma_0_o
 	)
 	
-	assign sigma_0_o = (A>>2) ^ (A>>13) ^ (A>>22);
+	reg [31:0] A_2, A_13, A_22;
+	assign A_2 	= {A_i[1:0],  A_i[31:2]};
+	assign A_13 	= {A_i[12:0], A_i[31:13]};
+	assign A_22 	= {A_i[21:0], A_i[31:22]};
+	assign sigma_0_o = (A_2) ^ (A_13) ^ (A_22);
 endmodule
 
 // The sigma 1 function rotates bits of E theb sums them together and modulo
@@ -136,6 +140,10 @@ module sigma_1
 	,output	reg [31:0] sigma_1_o
 	);
 	
-	assign sigma_1_o = (E>>6) ^ (E>>11) ^ (E>>25);
+	reg [31:0] E_6, E_11, E_25;
+	assign E_6  = {E_i[5:0],  E_i[31:6]};
+	assign E_11 = {E_i[10:0], E_i[31:11]};
+	assign E_25 = {E_i[24:0], E_i[31:25]}; 
+	assign sigma_1_o = (E_6) ^ (E_11) ^ (E_25);
 endmodule
-	
+
