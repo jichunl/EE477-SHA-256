@@ -7,12 +7,17 @@
 // output:
 // 	Wt_o: 	The output of the message scheduler
 module message scheduler
-	(input 	[31:0] 	M_i 
+	(input 	[511:0] M_i 
 	,input 		clk_i
 	
 	,output [31:0] 	Wt_o 
 	);
-
+        
+// Temp registers for storing the M_values
+	reg 
+	
+	always_ff@(posedge clk_i)
+	
 endmodule 
 
 // This is the sigma_0 function for the message scheduler
