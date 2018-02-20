@@ -8,7 +8,7 @@
 // 	Wt_o: 	The output of the message scheduler
 module message scheduler
 	(input 	[511:0] M_i 
-	,input 		clk_i
+//	,input 		clk_i
 	
 	,output [63:0][31:0] 	Wt_o 
 	);
@@ -34,10 +34,10 @@ endmodule
 // This is the sigma_0 function for the message scheduler
 // 
 // input:
-// 	word_i:
+// 	word_i:		The word that is going to be rotated
 //	
 // output:
-// 	msg_sch_sigma_0:
+// 	msg_sch_sigma_0:The output of sigma_0 function
 module msg_sch_sigma_0
 	(input 	[31:0] word_i
 	
@@ -56,10 +56,10 @@ endmodule
 // This is the sigma_1 function for the message scheduler
 // 
 // input:
-//	M_i: 
+//	word_i: 	The word that is going to be rotated
 // 	
 // output:
-// 	msg_sch_sigma_1:
+// 	msg_sch_sigma_1:The output of sigma_1 function
 module msg_sch_sigma_1
 	(input 	[31:0]	word_i
 	
