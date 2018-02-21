@@ -6,7 +6,7 @@
 // 
 // output:
 // 	Wt_o: 	The output of the message scheduler
-module message scheduler
+module SHA256_message_scheduler
 	(input 	[511:0] M_i 
 //	,input 		clk_i
 	
@@ -16,18 +16,21 @@ module message scheduler
 // Create word array
 	reg [63:0][31:0] w;
         // copy the chunk into first 16 words to word array
+	generate genvar i;
 	for (i = 0; i < 16; i++) begin
 		w[i][31:0] = M_i[16 * i + 15 : i * 16];
-	end
+	endgenerate
 	
 	reg [31:0] s0, s1;
 	
+	generate genvar j;
 	// compute values for rest of w
-	for (i = 16; i < 64; i++) begin
-		msg_sch_sigma_0 sigma0(.word_i(w[i - 15][31:0]), .s0_o(s0));
-		msg_sch_sigma_1 sigma1(.word_i(w[i - 2][31:0]),  .s1_o(s1)); 
-		w[i] = w[i - 16] + s0+ w[i - 7] + s1;
+	for (j = 16; j < 64; i++) begin
+		msg_sch_sigma_0 sigma0(.word_i(w[j - 15][31:0]), .s0_o(s0));
+		msg_sch_sigma_1 sigma1(.word_i(w[j - 2][31:0]),  .s1_o(s1)); 
+		w[i] = w[j - 16] + s0+ w[j - 7] + s1;
 	end
+	endgenerate
 	assign Wt_o = w; 
 endmodule 
 

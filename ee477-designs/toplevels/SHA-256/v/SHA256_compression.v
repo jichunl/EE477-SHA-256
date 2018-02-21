@@ -14,7 +14,7 @@
 // 	ready_o:	Indicate that the module is ready to receive new data
 // 	v_o:		Indicate that the module has produced a valid output
 // 	digest_o: 	The result of hashing the message
-module sha256_digest
+module SHA256_compression
 	(//input	wire		clk_i
 	//,input  wire 		reset_i
 	,input  	[255:0] message_i
