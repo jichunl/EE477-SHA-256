@@ -1,9 +1,0 @@
-*.log
-simv.daidir
-csrc
-simv
-*~
-DVEfiles
-*.vpd
-*.vcd
-ucli.key
