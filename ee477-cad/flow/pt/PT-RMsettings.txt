@@ -1,0 +1,28 @@
+##############################################################
+# Reference methodology option settings selected by the user.
+#
+# Copyright (C) 2015 Synopsys, Inc. All rights reserved.
+##############################################################
+
+Option Name:  Setting
+=====================
+Flow:  PTSI
+Fast Analysis Mode:  FALSE
+Back Annotation Mode:  SBPF
+Distributed Multicore Mode:  FALSE
+Distributed Multi-Scenario Mode:  FALSE
+Multivoltage Scaling Mode:  FALSE
+UPF Mode:  FALSE
+SHOW_PX_CMDS:  FALSE
+Power Analysis:  OFF
+Fix DRC ECO:  FALSE
+Fix Timing ECO:  FALSE
+Link to TetraMax:  FALSE
+Advanced OCV Mode File:  FALSE
+CRPR Mode:  FALSE
+Derate Mode:  FALSE
+Save Session:  FALSE
+Timing Models:  OFF
+Path-Based Analysis:  FALSE
+Reports:  ENHANCED
+Lynx Compatible:  FALSE

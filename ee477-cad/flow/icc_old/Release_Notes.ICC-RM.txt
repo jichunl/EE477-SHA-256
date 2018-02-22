@@ -1,0 +1,2514 @@
+####################################################################################
+# IC Compiler Reference Methodology Release Notes
+# Version: G-2012.06-SP4 (January 11, 2013)
+# Copyright (C) 2007-2013 Synopsys All rights reserved.
+####################################################################################
+
+G-2012.06-SP4
+=============
+
+Timer Updates
+-------------
+
+The set_delay_calculation command and its options have been replaced with the 
+set_delay_calculation_options command and its options and moved to 
+common_optimization_settings_icc.tcl.
+
+*  The set_delay_calculation -clock_arnoldi command has been replaced by the 
+   set_delay_calculation_options -routed_clock arnoldi command.
+
+*  The set_delay_calculation -arnoldi command has been replaced by the 
+   set_delay_calculation_options -postroute arnoldi command.
+
+*  The set_app_var timing_arnoldi_delay_calculation_effort_level high command 
+   has been replaced by the set_delay_calculation_options -arnoldi_effort high 
+   command. 
+
+Placement Updates
+-----------------
+
+*  A new option, ICC_PLACE_OPT_FLOW, has been added to RMgen.
+
+   This option is available only when you select QOR for the Focus on QoR or 
+   Feasibility option. The default value (DEFAULT) runs a single place_opt command 
+   in place_opt_icc.tcl, which matches the behavior in previous releases.
+
+   Set this option to TWO_PASS if you want to use a combination of commands in a 
+   two-pass flow. This is useful if you are working on a high-performance design 
+   and want to focus on the quality of results (QoR).
+
+   The two-pass flow runs the following commands:
+
+   o  remove_buffer_tree -all
+   o  create_placement
+   o  create_buffer_tree -no_legalize
+   o  create_placement -timing_driven
+   o  place_opt -skip_initial_placement (and other options)	
+
+*  Comments have been added in common_placement_settings_icc.tcl that allow you 
+   to enable the Zroute global router during place_opt, regardless of congestion 
+   and the -congestion option.
+   
+   This is suggested for 20nm consideration with design-for-test (DPT). 
+
+   ## For 20nm and below, to enable Zroute global router for DPT requirement 
+   #  regardless of congestion, 
+   #  please set the following : 
+   # 	set_app_var placer_congestion_effort medium   ;#force Zroute GR for 
+                                                        congestion if on 
+   # 	set_app_var placer_show_zroutegr_output true  ;#force Zroute GR info 
+                                                        to place_opt log
+
+Clock Tree Synthesis Update
+---------------------------
+
+The workaround to enable the set_scenario_options -setup true command for 
+clock-tree-synthesis-only scenarios has been removed. The clock_opt_cts.tcl 
+script has been updated. 
+
+Route and Postroute Updates
+---------------------------
+
+*  Comments regarding how to disable global route crosstalk prevention have been 
+   added to rm_icc_zrt_scripts/common_route_si_settings_zrt_icc.tcl:
+
+   ## By default, -route_xtalk_prevention true enables xtalk prevention for 
+   #  global route and track assignment,
+   #  to disable xtalk prevention for global route, uncomment the following command:
+   #  set_route_zrt_global_options -crosstalk_driven false
+
+   Note that these comments apply only when you select TRUE for the 
+   Zroute option in RMgen.
+
+*  A new variable, ICC_DBL_VIA_DURING_INITIAL_ROUTING, has been added to control 
+   where redundant via insertion occurs in the route_icc step. 
+
+   Note that this variable applies only when you select TRUE for the 
+   Zroute option in RMgen.
+
+   This variable is set to TRUE by default, which enables redundant via insertion 
+   automatically after the detail route phase of the route_opt -initial_route 
+   command.
+
+   For 20nm designs and below, if routing design rule checking (DRC) becomes 
+   a higher priority than the redundant via conversion rate, and if you want to 
+   check design rules before performing redundant via insertion, set the
+   ICC_DBL_VIA_DURING_INITIAL_ROUTING variable to FALSE. In this case, the 
+   automatic redundant via insertion phase of the route_opt -initial_route command 
+   is not enabled. Instead, you can use the standalone insert_zrt_redundant_vias 
+   command after the route_opt -initial command.   
+
+   The following code has been updated in route_icc.tcl:
+   
+   o  Before route_opt -initial_route:
+
+      if {$ICC_DBL_VIA && $ICC_DBL_VIA_DURING_INITIAL_ROUTING} {
+         set_route_zrt_common_options \
+            -post_detail_route_redundant_via_insertion medium
+      }
+
+   o  After route_opt -initial_route:
+
+      if {$ICC_DBL_VIA && !$ICC_DBL_VIA_DURING_INITIAL_ROUTING} {
+         save_mw_cel -as route_opt_icc_pre_rv_insertion 
+         insert_zrt_redundant_vias 
+         set_route_zrt_common_options \
+            -post_detail_route_redundant_via_insertion medium
+      }
+
+*  The comments for redundant via insertion in rm_icc_zrt_scripts/route_icc.tcl 
+   have been updated.
+
+*  Comments for verbose mode and additional route_opt practices, such as scenario 
+   compression in rm_icc_zrt_scripts/route_opt_icc.tcl, have been added or updated.
+
+Chip Finishing Updates
+----------------------
+
+A new variable, ICC_CUSTOM_MV_FILLER_CELL_INSERTION_SCRIPT, has been added to 
+specify a multivoltage filler-cell insertion. This variable points to an existing 
+script, insert_mv_filler_cells.tcl, as a template.
+
+The chip_finish_icc.tcl and eco_icc.tcl scripts have been updated.
+
+Usability Updates
+-----------------
+
+*  The SCRIPT-Info and SCRIPT-Error messages have been replaced with RM-Info and 
+   RM-Error messages for consistency.
+
+*  The echo "RM-Info: Sourcing [which $script]" message has been added before all 
+   the script variables are sourced in such a way that it clearly indicates where 
+   the script is sourced.
+
+*  The following new variables have been added for customized scripts:
+
+   o  CUSTOM_INIT_DESIGN_PRE_SCRIPT
+   o  CUSTOM_CLOCK_OPT_ROUTE_PRE_SCRIPT
+   o  CUSTOM_CLOCK_OPT_ROUTE_PRE_CTO_SCRIPT 
+   o  CUSTOM_CLOCK_OPT_ROUTE_POST_CTO_SCRIPT
+   o  CUSTOM_ROUTE_PRE_SCRIPT
+   o  CUSTOM_ROUTE_POST_SCRIPT
+   o  CUSTOM_FOCAL_OPT_PRE_SCRIPT
+   o  CUSTOM_FOCAL_OPT_POST_SCRIPT
+   o  CUSTOM_CHIP_FINISH_POST_SCRIPT  
+
+   For more details, see icc_setup.tcl.
+
+Lynx Compatibility
+------------------
+
+This release provides enhancements in the Lynx-compatible reference methodology 
+flow. For information about these enhancements, see the file named 
+Release_Notes.LynxCompatible-RM.txt.
+
+
+G-2012.06
+=========
+
+The following sections describe new features, changes, and enhancements in the
+IC Compiler Reference Methodology version G-2012.06.
+
+UPF Updates
+-----------
+
+The following updates have been made for IEEE 1801, which is also known as 
+Unified Power Format (UPF):
+
+*  Support has been added in icc_setup.tcl for creating supply set handles when 
+   you create power domains with the upf_create_implicit_supply_sets variable.
+
+*  The derive_pg_connection -create_net command has been added in 
+   init_design_icc.tcl for the Synopsys logical database format (.ddc) based flow.
+
+*  Support has been added in outputs_icc.tcl for the write_link_library command:
+   
+   write_link_library -full_path_lib_names \
+      -output $RESULTS_DIR/write_link_library.tcl"
+
+   PrimeTime uses the file produced by this command to identify the correct 
+   libraries to link for cells powered by non-primary power nets.
+  
+*  The filtering options for the all_level_shifters and all_ao_cells commands have 
+   been updated with the following expression in place_opt_icc.tcl and 
+   route_icc.tcl:
+
+   within_block_abstraction==false && within_ilm==false
+
+   This update ensures that all_level_shifters and all_ao_cells keep the same 
+   behavior they had in previous releases, which means they are applied on the 
+   top-level hierarchy only.
+
+
+place_opt Update
+----------------
+
+Comments have been added in place_opt_icc.tcl to support intercell spacing 
+constraints between library cells with the set_lib_cell_spacing_label and 
+set_spacing_label_rule commands.
+
+
+Physical Guidance Update
+------------------------
+
+Support for ASCII input has been added in the physical guidance flow. Previously, 
+only the binary input was supported. The messages and commands have been updated 
+in init_design_icc.tcl and place_opt_icc.
+
+A new variable, ICC_IN_SPG_DEF_FILE, has been added to specify a Design Exchange 
+Format (DEF) file that contains physical guidance placement information from the 
+Design Compiler Reference Methodology. The default naming convention for this file
+is ${DESIGN_NAME}.mapped.std_cell.def.
+
+You should use ICC_IN_SPG_DEF_FILE for physical guidance placement information 
+and use ICC_IN_DEF_FILE for non-physical-guidance related floorplan information.
+
+
+Clock Tree Synthesis Update
+---------------------------
+
+The CLOCK NDR and CLOCKSHIELDING NDR sections on the sequence of command execution
+have been updated in common_cts_settings_icc.tcl.
+
+In addition, the ICC_CTS_SHIELD_MODE variable is no longer required and has been 
+removed.
+
+
+Route and Postroute Optimization Updates
+----------------------------------------
+
+*  A new option, Zroute, has been added in RMgen.
+
+   This option allows you to choose between Zroute or the classic router. 
+   To generate only Zroute scripts, select TRUE. To generate only classic router 
+   scripts, select FALSE. 
+
+*  The check_routeability command has been replaced by the check_zrt_routeability 
+   command in rm_icc_zrt_scripts/route_icc.tcl.
+   
+   This change applies only when you select TRUE for the Zroute option in RMgen.
+
+*  The -analysis_effort medium option has been added to the set_si_options command 
+   and other set_si_options examples in common_route_si_settings_zrt_icc.tcl.
+  
+   To improve DRC convergence for newer technology nodes, such as 28nm and below, 
+   a comment has been added that suggests changing the search and repair loop for 
+   the route_opt -initial_route command from 10 to 40.
+
+   This comment appears only when you select TRUE for the Zroute option in RMgen.
+
+*  The comments regarding power-aware optimization and power recovery have been 
+   updated in route_opt_icc.tcl.
+
+*  Comments have been added in common_route_si_settings_zrt_icc.tcl suggesting 
+   that you increase the search and repair loops from 10 to 40 for the 
+   route_opt -initial command for newer technology nodes (28nm and below).
+
+   Comments have also been added suggesting that you disable the minimum area and 
+   length checks for the cell pins feature for older technology nodes 
+   (40nm and above).
+
+*  Comments regarding filler cell handling have been added in route_opt_icc.tcl 
+   and focal_opt_icc.tcl.
+
+   When running route_opt or focal_opt with filler cells placed, the filler cell
+   type must be std_filler.
+ 
+
+focal_opt Updates
+-----------------
+
+*  The following comment has been removed from focal_opt_icc.tcl because it is now 
+   part of the set_si_options -analysis_effort medium command.
+
+   ## Following variable can be set to improve correlation of hold time 
+      violations versus PTSI
+   ## This variable will increase the runtime of post route analysis and 
+      optimization
+   # set_app_var si_use_partial_grounding_for_min_analysis true
+
+*  The if-else statements for the focal_opt command in focal_opt_icc.tcl have been 
+   updated to skip individual violation types that are not specified.
+   
+   For example, if ICC_FOCAL_OPT_HOLD_VIOLS is unspecified (set as ""), then 
+   hold violations are not fixed.
+
+   The defaults for the ICC_FOCAL_OPT_HOLD_VIOLS and ICC_FOCAL_OPT_DRC_NET_VIOLS 
+   variables have been changed to all.
+
+*  The "route_opt -incremental -size_only" command has been added at the end of
+   focal_opt_icc.tcl, before the focal_opt -power command.
+
+   A reference to SolvNet article number 034130 has also been added.
+
+
+ECO Flow Updates 
+----------------
+
+The following engineering change order (ECO) enhancements are available only when 
+you select TRUE for the Zroute option in RMgen: 
+
+*  A new variable, ICC_ECO_METAL_FILL_MODE, has been added in eco_icc.tcl.
+
+   This variable allows you to choose between different metal fill modes:
+
+   o  Choose early_stage for IC Validator DRC-based metal fill removal. 
+   
+   o  Choose signoff_stage for complete IC V metal fill purge, ADR, and metal fill 
+      insertion.
+
+*  Support has been added in eco_icc.tcl for the -remove_filler_references option 
+   in the place_eco_cells command.
+
+   This option allows you to specify a list of the filler cell types to be removed 
+   when their instances overlap standard cells during ECO. The FILLER_CELL_METAL 
+   and FILLER_CELL variables are used by default.
+
+   The remove_stdcell_filler -stdcell command is no longer required and has been 
+   removed.
+  
+
+signoff_opt Update
+------------------
+
+The signoff_opt_icc task has been removed because the signoff_opt command has been 
+de-emphasized. All the scripts have been updated. The metal_fill_icc task now starts 
+with the CEL view saved by the chip_finish_icc task instead of the CEL view saved 
+by signoff_opt_icc.
+
+
+Miscellaneous Updates
+---------------------
+
+*  The -nosplit option has been added for all the report commands that support it.
+
+   All the scripts have been updated.
+
+*  The ICC_WRITE_FULL_CHIP_VERILOG option has been added to outputs_icc.tcl for all 
+   the write_verilog commands.
+
+   This option enables the -macro_definition option, which writes out soft macro 
+   definitions. The default is FALSE. The IC Compiler Hierarchical Reference 
+   Methodology sets this variable to TRUE for top-level implementation.
+
+*  The check_physical_design -stage pre_place_opt command has been moved from 
+   place_opt_icc.tcl to init_design_icc.tcl.
+
+   This change allows you to see the check_physical_design report before place_opt starts.
+
+*  A correction has been made in init_design_icc.tcl.
+
+   The set_clock_gating_check command, in comments, no longer depends on 
+   the ICC_CRITICAL_RANGE, ICC_MAX_TRANSITION, and ICC_MAX_FANOUT options.
+
+*  Support has been added for block abstractions.
+
+   The ICC_CREATE_BLOCK_ABSTRACTION variable has been added to icc_setup.tcl. 
+   Use this variable to control which command is used at the end of block 
+   implementation in outputs_icc.tcl: create_block_abstraction (TRUE), which 
+   generates a block abstraction, or create_ilm (FALSE), which generates an 
+   interface logic model (ILM). The default is create_block_abstraction.
+
+*  Support has been added for top-level optimization using block abstractions.
+
+   When you run the IC Compiler Hierarchical Reference Methodology, it uses the 
+   IC Compiler Reference Methodology for top-level implementation. Transparent 
+   interface optimization (TIO) support has been added to the route_opt command 
+   for top-level implementation, which includes route_opt_icc.tcl, 
+   chip_finish_icc.tcl, and focal_opt_icc.tcl. Transparent interface 
+   optimization only works with block abstractions.
+
+   The following new variables have been added in icc_setup.tcl to control 
+   transparent interface optimization:
+
+   set ICC_TIO_BLOCK_LIST ""    ;# a list; specify block reference  
+                                   names for TIO to work on; 
+
+                                ;# default is empty and will be auto set to all 
+                                   blocks by prepare_block_dp task of HRM
+
+   set ICC_TIO_HOST_OPTION_POOL_OPTION ""    
+                                ;# lsf|grd; this controls the -pool option  
+                                   for set_host_options"
+
+   set ICC_TIO_HOST_OPTION_SUBMIT_OPTIONS {} 
+                                ;# controls the value of -submit_option 
+                                   option for set_host_options. If 
+                                   ICC_TIO_HOST_OPTION_POOL_OPTION 
+                                   is set to lsf, 
+
+                                ;# then lsf specific submit options 
+                                   should be specified, for example, 
+
+                                ;# {-q bnormal 
+                                   -R "rusage\[mem=12000\]\cputype==  
+                                   emt64 cpuspeed==EMT3000 qsc==e"}
+
+   set ICC_TIO_WRITE_ECO_FILE "FALSE"        
+                                ;# TRUE|FALSE; set to TRUE to write out 
+                                   an ECO file to TIO_eco_changes directory
+
+   set ICC_TIO_OPTIMIZE_BLOCK_INTERFACE "TRUE" 
+                                ;# TRUE|FALSE; set to TRUE to optimize 
+                                   interface logic
+
+   set ICC_TIO_OPTIMIZE_SHARED_LOGIC "FALSE"    
+                                ;# TRUE|FALSE; set to TRUE to optimize 
+                                   shared logic
+
+   Because ICC_TIO_OPTIMIZE_BLOCK_INTERFACE is set to TRUE by default and 
+   ICC_TIO_BLOCK_LIST is automatically set to all blocks at the prepare_block_dp 
+   step, transparent interface optimization is 
+   
+   o  Enabled by default to work on all blocks for the route_opt command if 
+      ICC_TIO_HOST_OPTION_POOL_OPTION and ICC_TIO_HOST_OPTION_SUBMIT_OPTIONS are 
+      also specified as required by IC Compiler.
+
+   o  Not performed if ICC_TIO_HOST_OPTION_POOL_OPTION and 
+      ICC_TIO_HOST_OPTION_SUBMIT_OPTIONS are not specified, .
+
+   When transparent interface optimization is enabled, the block CEL views specified 
+   in ICC_TIO_BLOCK_LIST are automatically copied to the same design library in such 
+   a way that transparent interface optimization can work on them.
+
+   In addition, ICC_IMPLEMENTATION_PHASE is automatically set to top for the 
+   top-level design if the IC Compiler Hierarchical Reference Methodology is used 
+   in such a way that transparent interface optimization support is enabled. 
+   (Transparent interface optimization works only at the top-level design when 
+   ICC_IMPLEMENTATION_PHASE is set to top.)
+
+*  ICC_ILM_LIBS has been renamed to ICC_SOFT_MACRO_LIBS because the scripts now 
+   support both block abstractions and ILMs.  
+
+   ICC_SKIPPED_IN_BLOCK_IMPLEMENTATION has been renamed to ICC_IMPLEMENTATION_PHASE.
+
+   The descriptions in icc_setup.tcl have been updated.
+
+
+Lynx Compatibility
+------------------
+
+This release provides enhancements in the Lynx-compatible reference methodology 
+flow. For information about these enhancements, see the file named 
+Release_Notes.LynxCompatible-RM.txt.
+
+
+F-2011.09-SP4
+=============
+
+The following sections describe new features, changes, and enhancements in the 
+IC Compiler Reference Methodology version F-2011.09-SP4.
+
+Multicorner-Multimode Related Updates
+-------------------------------------
+
+For the multicorner-multimode flow, the timing derating values are now applied in 
+rm_icc_scripts/mcmm.scenarios.example instead of in init_design_icc.tcl. You can 
+now customize the values for each scenario.
+
+*  In rm_icc_scripts/mcmm.scenarios.example, variables have been added to customize 
+   the derating values for each scenario.
+
+   For example, the ICC_LATE_DERATING_FACTOR_1 and ICC_EARLY_DERATING_FACTOR_1 
+   variables have been added for SCENARIO_1, the ICC_LATE_DERATING_FACTOR_2 
+   and ICC_EARLY_DERATING_FACTOR_2 variables have been added for SCENARIO_2, 
+   and so forth. These variables default to $ICC_LATE_DERATING_FACTOR and 
+   $ICC_EARLY_DERATING_FACTOR respectively in icc_setup.tcl.
+   
+   If you want to apply a common value for each scenario, you can do so by using 
+   $ICC_LATE_DERATING_FACTOR and $ICC_EARLY_DERATING_FACTOR.
+
+   set ICC_LATE_DERATING_FACTOR_1 $ICC_LATE_DERATING_FACTOR   
+                                 ;# Late derating factor for SCENARIO_1, 
+                                    used for both data and clock; default 
+                                    to $ICC_LATE_DERATING_FACTOR
+
+   set ICC_EARLY_DERATING_FACTOR_1 $ICC_EARLY_DERATING_FACTOR 
+                                  ;# Early derating factor for SCENARIO_1, 
+                                     used for both data and clock; default 
+                                     to $ICC_EARLY_DERATING_FACTOR
+
+*  The following procedure has been removed from init_design_icc.tcl because 
+   it is no longer needed for the multicorner-multimode flow:
+
+   ## if you add below your own set_timing_derate commands on lib cells, 
+      you'll need to apply the following for every step in the flow
+   if {$ICC_APPLY_RM_DERATING} {
+     set cur_scenario [current_scenario]
+     foreach scenario [all_active_scenarios] { 
+       current_scenario $scenario 
+
+       ##derate values may vary by corner
+       set_timing_derate -early $ICC_EARLY_DERATING_FACTOR -cell_delay 
+       set_timing_derate -late  $ICC_LATE_DERATING_FACTOR  -cell_delay 
+       set_timing_derate -early $ICC_EARLY_DERATING_FACTOR -net_delay 
+       set_timing_derate -late  $ICC_LATE_DERATING_FACTOR  -net_delay
+     };
+     current_scenario $cur_scenario
+   }
+
+Comments have been added to provide additional information regarding the on-chip 
+variation (OCV) setup for scenario creation. Here is an example for SCENARIO_1:
+    
+   ## On chip variation is used as analysis type for the example.
+   #  As -min_library and -min are not specified, the tool uses the max 
+      operating condition for -min.
+   #  That means tool is modeling on chip variation using the max operating 
+      condition and the early and late derating factors for
+   #  min and max path delay analysis, respectively.
+   set_operating_conditions \
+       -analysis_type on_chip_variation -max_library $OPCOND_1_LIB -max $OPCOND_1
+
+In the multicorner-multimode flow, the read_saif command for the self-gating 
+insertion feature in clock_opt_cts_icc.tcl, which is enabled by 
+$ICC_CTS_SELF_GATING, is now read for each scenario:
+
+   if {$ICC_CTS_SELF_GATING && [file exists [which $ICC_IN_SAIF_FILE]]} {
+     foreach scenario [all_active_scenarios] {
+       current_scenario $scenario
+       read_saif -input $ICC_IN_SAIF_FILE \
+           -instance_name $ICC_SAIF_INSTANCE_NAME
+     }
+   }
+
+
+Optimization-Related Updates
+----------------------------
+
+The congestion-driven control has been updated.
+
+*  The $PLACE_OPT_CONGESTION variable has been renamed $PLACE_OPT_CONGESTION_DRIVEN.
+
+   This variable now controls the congestion-driven option for both the place_opt 
+   command (in the place_opt_icc step) and the clock_opt -only_psyn command 
+   (in the clock_opt_psyn_icc step). The default value is TRUE.
+
+Layer optimization has been added.
+
+*  Two new variables have been added to enable layer optimization after the 
+   place_opt command (in the place_opt_icc step) and the clock_opt -only_psyn 
+   command (in the clock_opt_psyn_icc step):
+   
+   set PLACE_OPT_PREROUTE_FOCALOPT_LAYER_OPTIMIZATION  FALSE
+                              ;# TRUE|FALSE; set TRUE to perform layer optimization 
+                                 (preroute_focal_opt -layer_optimization) 
+                              ;# on existing buffer trees after place_opt command 
+                                 in place_opt_icc step
+
+   set CLOCK_OPT_PSYN_PREROUTE_FOCALOPT_LAYER_OPTIMIZATION  FALSE    
+                              ;# TRUE|FALSE; set TRUE to perform layer optimization 
+                                 (preroute_focal_opt -layer_optimization)
+                              ;# on existing buffer trees after clock_opt -only_psyn 
+                                 command in clock_opt_psyn_icc step
+
+   These variables are optional.
+
+*  The following comments and commands have been added to the scripts:
+
+   ## For advanced technologies, where upper metal layer resistance values are 
+      much smaller then lower layer ones,
+   #  you can perform layer optimization to improve existing buffer trees.
+   #  Use set_preroute_focal_opt_strategy to customize the settings. 
+   report_preroute_focal_opt_strategy
+   preroute_focal_opt -layer_optimization
+
+
+ECO Flow Updates
+----------------
+
+The unconstrained engineering change order (ECO) flow has been updated in 
+eco_icc.tcl. (You enable the unconstrained ECO flow by setting ICC_ECO_FLOW to 
+"UNCONSTRAINED" in icc_setup.tcl.) Only the Zroute-based script, 
+rm_icc_zrt_scripts/eco_icc.tcl, has been updated.
+
+*  The $ICC_ECO_NETLIST variable, used to specify the ECO input file, has been 
+   renamed $ICC_ECO_FILE.
+
+   You can specify either a Verilog netlist or a tool command language (Tcl) file, 
+   generated by PrimeTime, that contains the ECO changes.
+
+*  A new variable, $ICC_ECO_FLOW_TYPE, has been added that allows you to specify 
+   the content type of the file specified by $ICC_ECO_FILE.
+
+   This new variable applies only to the unconstrained ECO flow. It supports three 
+   types: verilog, pt_drc_setup_fixing_tcl, and pt_hold_fixing_tcl. The commands 
+   used to read the $ICC_ECO_FILE file and place the ECO cells vary depending on 
+   which type you specify.
+
+   o  Specify "verilog" if you provide a functional ECO file for $ICC_ECO_FILE.
+
+   o  Specify "pt_drc_setup_fixing_tcl" if you provide a PrimeTime-generated change 
+      file by using the fix_eco_drc command or the fix_eco_timing -setup command.
+
+   o  Specify "pt_hold_fixing_tcl" if you provide a PrimeTime-generated change file 
+      by using the fix_eco_timing -hold command.  
+
+In summary, to use the unconstrained ECO flow, you must specify both an ECO input 
+file, by using $ICC_ECO_FILE, and the file type, by using $ICC_ECO_FLOW_TYPE.
+
+The commands in eco_icc.tcl have been updated. Here are the details:
+
+*  The content type that you specify with $ICC_ECO_FLOW_TYPE determines which 
+   commands are used to read the ECO input file and place the ECO cells.
+
+   For the verilog type:
+   
+   o  Use the eco_netlist -compare_pg -by_verilog_file command to read the ECO 
+      input file.
+      
+   o  Use the place_eco_cells -eco_changed_cells command to place the ECO cells.  
+   
+   For the pt_drc_setup_fixing_tcl type:
+   
+   o  Use the eco_netlist -by_tcl_file command to read the ECO input file.
+      
+   o  Use the place_eco_cells -cells -no_legalize and 
+      place_eco_cells -eco_changed_cells -legalize_only commands to place the 
+      ECO cells.
+
+   For the pt_hold_fixing_tcl type:
+   
+   o  Use the eco_netlist -by_tcl_file command to read the ECO input file. 
+      
+   o  Use the place_eco_cells -eco_changed_cells -legalize_only command to place 
+      the ECO cells.
+
+   For the actual commands that are used, see eco_icc.tcl.
+
+*  New steps have been added to complete the ECO flow.
+
+   o  First, the standard cell fillers are removed (by using remove_stdcell_filler) 
+      before reading in the ECO input file.
+
+   o  After reading in the ECO input file, the derive_pg_connection command is run 
+      to connect the power and ground (PG) pins for the new cells.
+      
+      This step is followed by the place_eco_cells commands mentioned previously.
+
+   o  After the place_eco_cells commands have run, the fillers are reinserted 
+      (by using insert_stdcell_filler) and ECO routing is performed (by using 
+      route_zrt_eco). 
+
+      The options for ECO routing have been updated, and a link to the application 
+      note about ECO routing has been added as a comment. 
+  
+   o  Finally, the purging of metal fill step (by using the IC Validator-based 
+      signoff_metal_fill -purge command), the optional automatic DRC repair step 
+      (by using signoff_autofix_drc), and the metal fill insertion step (by using 
+      signoff_metal_fill) are performed.
+
+      For the optional automatic DRC repair step, a link to the application note 
+      about automatic DRC repair has been added as a comment. 
+
+
+Miscellaneous Updates
+--------------------
+
+The comments for the $ICC_NUM_CORES variable in icc_setup.tcl have been updated 
+with the information that four cores are recommended for the IC Validator-based 
+commands:
+
+   set ICC_NUM_CORES 1 ;# number of cores on the local host for multicore  
+                          support; 4 cores are recommended for ICV based 
+                       ;# signoff_metal_fill and signoff_drc commands
+
+The following optional variables have been added in icc_setup.tcl and are now used 
+in the corresponding scripts. These variables allow you to source customized scripts
+before and after running the core commands.
+
+When a script is specified, it is sourced just before or after the core commands 
+are run in the corresponding steps:
+
+*  CUSTOM_PLACE_OPT_PRE_SCRIPT is sourced before place_opt is run 
+   in place_opt_icc.tcl.
+
+*  CUSTOM_PLACE_OPT_POST_SCRIPT is sourced after place_opt is run 
+   in place_opt_icc.tcl.
+
+*  CUSTOM_CLOCK_OPT_CTS_PRE_SCRIPT is sourced before clock_opt -only_cts is run 
+   in clock_opt_cts_icc.tcl.
+
+*  CUSTOM_CLOCK_OPT_CTS_POST_SCRIPT is sourced after clock_opt -only_cts is run 
+   in clock_opt_cts_icc.tcl.
+
+*  CUSTOM_CLOCK_OPT_PSYN_PRE_SCRIPT is sourced before clock_opt -only_psyn is run 
+   in clock_opt_psyn_icc.tcl.
+
+*  CUSTOM_CLOCK_OPT_PSYN_POST_SCRIPT is sourced after clock_opt -only_psyn is run 
+   in clock_opt_psyn_icc.tcl.
+
+*  CUSTOM_ROUTE_OPT_PRE_SCRIPT is sourced before route_opt is run 
+   in route_opt_icc.tcl.
+
+*  CUSTOM_ROUTE_OPT_POST_SCRIPT is sourced after route_opt is run 
+   in route_opt_icc.tcl.
+
+To avoid conflict and overlap with existing commands, you should review each script 
+for the exact location where the variable is sourced.
+
+
+F-2011.09-SP2
+=============
+
+The following sections describe new features, changes, and enhancements in the 
+IC Compiler Reference Methodology version F-2011.09-SP2.
+
+Floorplanning Update
+--------------------
+
+The initialize_floorplan command has been replaced with the create_floorplan 
+command.
+
+
+Multivoltage Updates
+--------------------
+
+The NONUPF setting has been removed from the Multivoltage or Multisupply option 
+in RMgen. The valid settings are now NONE (for a non-multivoltage design) and UPF.
+
+*  All the NONUPF content has been removed.
+
+*  The mv_pg_connect.tcl and mv_setup_design.tcl files have been removed.
+
+*  The AO_INSTANCES variable has been removed from icc_setup.tcl.
+
+The following updates have been made in init_design_icc.tcl:
+
+*  The CUSTOM_LOAD_ASCII_UPF_SCRIPT_LIST variable and its associated commands 
+   have been removed from both init_design_icc.tcl and icc_setup.tcl.
+
+*  The output from the check_mv_design command in init_design_icc.tcl is now 
+   redirected to a file.
+
+*  The read_sdc command for the non-multicorner-multimode and Verilog-based flows 
+   has been moved ahead of the derive_pg_connection -create_net command.
+
+*  The ICC_IN_RESOLVE_SUPPLY_SET_UPF_FILE variable has been added in icc_setup.tcl 
+   to allow you specify a UPF file for resolving supply sets:
+
+   set ICC_IN_RESOLVE_SUPPLY_SET_UPF_FILE "" ;# for UPF flow with VERILOG inputs, 
+                                             provide a secondary UPF file to 
+                                             resolve supply sets after reading in 
+                                             the UPF file.
+
+
+Placement and Optimization Updates
+----------------------------------
+
+*  A comment has been added in common_post_cts_settings.tcl to enable optional 
+   high effort hold time fixing:
+
+   set_fix_hold_options -preferred_buffer
+   # Optionally add -effort high to reduce hold buffer count and 
+   # improve min delay fixing QoR
+
+*  A comment has been added in common_placement_settings_icc.tcl to enable the new
+   optional blockage technology:
+
+   # set placer_enable_enhanced_soft_blockages true
+
+*  All scenarios are now activated before running the set_ideal_net_work command 
+   or the remove_ideal_network command.
+
+   After the command is run, the initial active scenarios are restored. Previously, 
+   these commands worked only on the currently active scenarios instead of all 
+   the scenarios.
+
+   The place_opt_icc.tcl and clock_opt_psyn_icc.tcl files have been updated.
+
+*  The read_saif command has been relocated to clock_opt_cts_icc.tcl.
+
+   This command is now run just before the clock_opt -only_cts command.
+
+
+Timing and Multicorner-Multimode Updates
+----------------------------------------
+
+*  The advanced on-chip variation (AOCV) commands and variables for the 
+   non-multicorner-multimode flow have been added before the clock_opt -only_psyn
+   core command in clock_opt_psyn_icc.tcl and icc_setup.tcl.
+
+   If an AOCV table (ICC_IN_AOCV_TABLE_FILE) is specified, it is read and 
+   timing_aocvm_enable_analysis is set to true.
+
+*  The mcmm.scenarios.example code no longer appears if you do not select TRUE for 
+   Multicorner-Multimode (MCMM) Optimization option in RMgen.
+
+
+Clock Tree Synthesis Update 
+--------------------------- 
+
+The reading of the gate-level Switching Activity Interchange Format (SAIF) file 
+for the low power placement and self-gating features has been updated in 
+clock_opt_cts_icc.tcl. 
+
+*  Previously, two separate variables, ICC_IN_SAIF_FILE and 
+   ICC_CTS_SELF_GATING_SAIF_FILE, were used to specify the gate-level SAIF files 
+   for these features.
+
+*  Now, you can use ICC_IN_SAIF_FILE to specify one gate-level SAIF file for both 
+   features and use ICC_SAIF_INSTANCE_NAME to specify the instances.
+
+The gate-level SAIF file is now read before the clock_opt -only_cts command is 
+performed.
+
+*  To enable the low power placement feature, set both POWER_OPTIMIZATION and 
+   ICC_CTS_LOW_POWER_PLACEMENT to TRUE.
+   
+   The gate-level SAIF file is optional.
+
+*  To enable the self-gating feature, set ICC_CTS_SELF_GATING to TRUE.
+
+   The gate-level SAIF file is optional.  
+
+The ICC_CTS_SELF_GATING_SAIF_FILE variable has been removed from icc_setup.tcl and 
+clock_opt_cts_icc.tcl.
+
+The ICC_CTS_SELF_GATING variable has been added to icc_setup.tcl and 
+clock_opt_cts_icc.tcl.
+
+
+Focal Optimization Update
+-------------------------
+
+The focal_opt -power command now requires only one active leakage scenario.
+
+The focal_opt_icc.tcl file has been updated.
+
+
+Lynx Compatibility
+------------------
+
+This release provides enhancements in the Lynx-compatible reference methodology 
+flow. For information about these enhancements, see the file named 
+Release_Notes.LynxCompatible-RM.txt.
+
+
+F-2011.09
+=========
+
+The following sections describe new features, changes, and enhancements in the 
+IC Compiler Reference Methodology version F-2011.09.
+
+Updates for derive_pg_connection in the Multivoltage and Multisupply Flows
+--------------------------------------------------------------------------
+
+The following changes apply to the multivoltage-multisupply flow that is based on 
+IEEE 1801, also known as Unified Power Format (UPF), and the non-UPF multivoltage-
+multisupply flow. To enable one of these flows, select the UPF or NONUPF setting 
+for the Multivoltage or Multisupply option in RMgen.
+
+*  For the UPF-based flow, the derive_pg_connection -create_net command in 
+   init_design_icc.tcl has been moved to follow the load_upf command.
+
+*  For both the UPF-based and non-UPF-based flows, the derive_pg_connection command 
+   has been added before the read_floorplan command.
+   
+   This change was made to properly create PG ports in case the floorplan file to be 
+   read includes create_terminal commands on the PG ports.  
+
+
+Timing-Related Updates
+----------------------
+
+*  The set_clock_gating_check command has been updated in init_design_icc.tcl.
+
+   In IC Compiler version F-2011.09, the clock-gating checks that are defined on 
+   the design level no longer override the library settings. Because of this change, 
+   the comments about using the set_clock_gating_check command for different 
+   clock-gating styles have been updated: 
+
+   # set_clock_gating_check -setup 0 [current_design]
+   # set_clock_gating_check -hold 0 [current_design]
+   ## Note on using set_clock_gating_check for different clock gating styles:
+   #  1.If your design has discrete clock gates but does not have any clock gating 
+        checks defined on them,
+   #    you should uncomment the above 2 commands or 
+   #    customize them with non-zero values and set them on either the design level
+        or on the instances preferably.
+   #  2.If your design has ICG cells only,
+   #    you do not need to uncomment the above commands as the tool will honor 
+        library defined checks.
+
+   Also, the set timing_scgc_override_library_setup_hold false command has been 
+   removed from rm_icc_scripts/common_optimization_settings_icc.tcl.
+
+*  The propagate_all_clocks command has been updated in clock_opt_psyn_icc.tcl 
+   and route_opt_icc.tcl.
+
+   The following comments have been added to provide an optional step if the 
+   conditions are met:
+
+   ## If you add additional scenarios after clock_opt_cts_icc step, use the 
+      following command to propagate all clock sources for active scenarios :
+   #  propagate_all_clocks
+
+*  The set_app_var case_analysis_with_logic_constants true command has been 
+   removed from common_optimization_settings_icc.tcl because the 
+   case_analysis_with_logic_constants variable is now set to true by default 
+   in IC Compiler.
+
+*  The following command is now used in common_route_si_settings_icc.tcl to enable 
+   full Arnoldi delay calculation:
+   
+   set_app_var timing_arnoldi_delay_calculation_effort_level high
+
+   Previously, the following command was used:
+   
+   set rc_rd_more_than_rnet_arnoldi_threshold 100000000
+
+*  The remove_propagated_clock [all_fanout -clock_tree -flat] command and the
+   remove_propagated_clock * command in init_design_icc.tcl have been replaced 
+   by the remove_propagated_clock -all command.
+
+               
+DFT Flow Update
+---------------
+
+To support the new SCANDEF user interface in IC Compiler version F-2011.09, the 
+DFT flow has been updated in place_opt_icc.tcl, clock_opt_cts_icc.tcl, and 
+clock_opt_psyn_icc.tcl.
+
+*  The -continue_on_missing_scandef option is now added to the core commands 
+   when the following conditions are met:
+
+   o  When you set the $DFT variable to FALSE, which means you do not intent to 
+      perform scan reordering,
+      
+      The $DFT variable is set to TRUE by default.
+
+   o  When there is no SCANDEF loaded in the design.
+
+*  This update applies to the following commands by default:
+
+   place_opt
+   clock_opt -only_cts
+   clock_opt -only_psyn
+   
+   If you select FEASIBILITY for the Focus on QoR or Feasibility option in RMgen, 
+   this update applies to the following commands:
+   
+   place_opt_feasibility
+   clock_opt -only_cts
+   clock_opt_feasibility -only_psyn
+
+
+Power Optimization Flow Updates
+-------------------------------
+
+The power optimization flow user interface has been updated in the IC Compiler 
+Reference Methodology because IC Compiler no longer supports the set_power_options 
+command and its options.
+
+Use the new $POWER_OPTIMIZATION variable to enable the power optimization flow.
+When $POWER_OPTIMIZATION is set to TRUE, you can further control the focus of 
+leakage power optimization by specifying $ICC_CUSTOM_MULTI_VTH_CONSTRAINT_SCRIPT. 
+If you specify this variable, leakage power optimization is focused on 
+low-threshold-voltage cell reduction. Otherwise, leakage power optimization is 
+focused on leakage power reduction.
+
+The scripts have been updated with the new variables. The LEAKAGE_POWER variable, 
+DYNAMIC_POWER variable, and set_power_options commands have been removed.
+
+In addition, the variables and commands that control power optimization for clock 
+tree synthesis have been updated. The focal_opt -power command has been added with 
+the requirement that you can set only one leakage scenario.
+
+*  The following new variables have been added:
+ 
+   set POWER_OPTIMIZATION TRUE  
+
+      ;# TRUE|FALSE; set TRUE to enable power optimization (-power option) for the 
+         core commands such as place_opt, clock_opt, 
+      ;# route_opt, and focal_opt. If $ICC_CUSTOM_MULTI_VTH_CONSTRAINT_SCRIPT below  
+         is also specified, 
+      ;# leakage power optimization is focused on lvt cell reduction; otherwise 
+         focused on leakage power reduction.
+      ;# for MCMM, set set_scenario_options -leakage true to enable leakage power 
+         optimization on scenarios;
+      ;# see rm_icc_scripts/mcmm.scenarios.example for more details.
+
+   set ICC_CUSTOM_MULTI_VTH_CONSTRAINT_SCRIPT ""
+   
+      ;# script for customized set_multi_vth_constraints constraints. Effective only 
+         when $POWER_OPTIMIZATION is set to TRUE;
+      ;# specify to make leakage power optimization focused on lvt cell reduction; 
+	 refer to rm_icc_scripts/multi_vth_constraint.example as an example.
+  
+*  The ICC_LOW_POWER_PLACEMENT variable has been renamed 
+   ICC_CTS_LOW_POWER_PLACEMENT.
+  
+*  The following scripts have been updated: 
+
+   The new $POWER_OPTIMIZATION variable has been added to the following scripts:
+
+   place_opt_icc.tcl
+   clock_opt_cts_icc.tcl
+   clock_opt_psyn_icc.tcl
+   route_opt_icc.tcl
+   focal_opt_icc.tcl
+ 
+   The following variables have been inserted before the clock_opt -only_cts command 
+   in clock_opt_cts_icc.tcl to control clock tree synthesis specific features:
+
+   o  if {$POWER_OPTIMIZATION && $ICC_CTS_LOW_POWER_PLACEMENT} 
+      {set_optimize_pre_cts_power_options -low_power_placement true}
+
+   o  if {$POWER_OPTIMIZATION && $ICC_CTS_CLOCK_GATE_MERGE} 
+      {set_optimize_pre_cts_power_options -merge_clock_gates true}
+
+   o  if {$POWER_OPTIMIZATION && $ICC_CTS_CLOCK_GATE_SPLIT} 
+      {set_optimize_pre_cts_power_options -split_clock_gates true}
+
+   The following check has been added in focal_opt_icc.tcl to ensure that only one 
+   leakage scenario is set before running the focal_opt -power command in the 
+   multicorner-multimode flow: 
+
+   if {[llength [get_scenarios -leakage true]] == 1} {focal_opt -power}
+
+*  The following variables have been removed:
+
+   set LEAKAGE_POWER  TRUE    ;# TRUE|FALSE; set to TRUE to enable leakage 
+                                 optimization flow
+
+   set DYNAMIC_POWER  FALSE   ;# TRUE|FALSE; set to TRUE to enable dynamic power 
+                                 optimization flow
+  
+*  The following obsolete commands have been removed from 
+   common_optimization_settings_icc.tcl and place_opt_icc.tcl:
+
+   set_power_options -clock_gating true
+   set_power_options -low_power_placement true
+   set_power_options -leakage true
+   set_power_options -dynamic true
+  
+*  The set_max_leakage_power command has been removed from 
+   rm_icc_scripts/mcmm.scenarios.example because it is obsolete.
+
+*  The comments for the set_multi_vth_constraint command have been removed from 
+   place_opt_icc.tcl, clock_opt_psyn_icc.tcl, and route_opt_icc.tcl.
+
+
+Signal Electromigration Update
+------------------------------
+
+The propagate_switching_activity command in chip_finishing_icc.tcl has been 
+removed from the comments in the signal electromigration flow because it is 
+no longer needed.
+
+
+Formality Update in fm.tcl
+--------------------------
+
+The following variable has been added with comments:
+
+   set_app_var verification_force_upf_supplies_on false
+
+This update applies only to scripts that you generate when you select the 
+UPF setting for the Multivoltage or Multisupply option in RMgen.
+
+
+Miscellaneous Updates
+---------------------
+
+The listing order of various variables in icc_setup.tcl has been rearranged and 
+the comments have been updated for easier navigation.
+
+
+Lynx Compatibility
+------------------
+
+This release provides enhancements in the Lynx-compatible reference methodology 
+flow. For information about these enhancements, see the file named 
+Release_Notes.LynxCompatible-RM.txt.
+
+
+E-2010.12-SP4
+=============
+
+The following sections describe new features, changes, and enhancements in the 
+IC Compiler Reference Methodology version E-2010.12-SP4.
+
+
+Search Path Related Updates 
+---------------------------
+
+*  In icc_setup.tcl, the ./$RESULTS_DIR directory has been added to the search_path 
+   variable. 
+
+   This allows you to run the IC Compiler Reference Methodology using 
+   Design Compiler Reference Methodology output without modifications.
+  
+   Similarly, the ../../rm_dc/work/dc directory has been added to search_path in 
+   the Lynx-compatible versions of the IC Compiler Reference Methodology scripts.
+
+*  In init_design_icc.tcl, as the script updates the search_path variable, it now 
+   echoes the $ICC_IN_SDC_FILE file that it uses before running read_sdc.
+
+
+Flip Chip Related Updates
+-------------------------
+
+In icc_setup.tcl, the reference to the SolvNet article has been updated:
+
+   ## Please refer to SolvNet article #030588 for more details on the flip chip flow
+
+The previous reference was
+
+   ## Please refer to SolvNet #025348 for more details on flip chip flow
+
+
+DFT Related Updates
+-------------------
+
+*  In icc_setup.tcl, the following default value for $ICC_IN_SCAN_DEF_FILE 
+   has been moved to a comment:
+
+   set ICC_IN_SCAN_DEF_FILE ""  ;# default from DC-RM is $DESIGN_NAME.mapped.scandef
+
+*  In place_opt_icc.tcl, a problem has been fixed by removing the duplicate reading 
+   of the SCANDEF file.
+
+
+Route Optimization Related Updates
+----------------------------------
+
+You can enable pre-sizing as a first step in route_opt crosstalk reduction by 
+setting the routeopt_xtalk_reduction_cell_sizing variable.
+
+The following comments have been added in rm_icc_zrt_scripts/route_opt_icc.tcl:
+
+   # To enable cell pre-sizing as a first step in route_opt crosstalk reduction,
+   # set the following variable to TRUE (default is FALSE):
+   # set_app_var routeopt_xtalk_reduction_cell_sizing TRUE
+
+
+Signoff Optimization Related Updates
+------------------------------------
+
+*  Additional checks for the PrimeTime and StarRC executables have been added.
+
+   o  The following checks have been added to signoff_opt_icc.tcl and 
+      signoff_opt_check_correlation_postroute_icc.example.tcl:
+      
+      -- If $PT_DIR is not set, the script derives it automatically from your 
+         pt_shell search_path.
+
+      -- If $STARRC_DIR is not set, the script derives it automatically from your 
+         StarXtract search_path.
+
+      The script now proceeds only if both $PT_DIR and $STARRC_DIR are valid.
+
+   o  The following check has been added in 
+      signoff_opt_check_correlation_preroute_icc.example.tcl:
+   
+      If $PT_DIR is not set, the script derives it automatically from your 
+      pt_shell search_path.
+
+      The -pt_only option has been added to the check_signoff_correlation command and the set_starrcxt_options commands have been removed because the script 
+      is focused on PrimeTime.
+
+   o  The following checks have been added in metal_fill_icc.tcl:
+
+      -- If $PT_DIR is not set, the script derive it automatically from your 
+         pt_shell search_path.
+
+      -- If $STARRC_DIR is not set, the script derives it automatically from your 
+         StarXtract search_path.
+
+      The script now runs the copy_mw_cel command from $ICC_SIGNOFF_OPT_CEL only if 
+      both $PT_DIR and $STARRC_DIR are valid, Previously, the script checked only 
+      $PT_DIR.
+
+*  In signoff_opt_check_correlation_preroute_icc.example.tcl and 
+   signoff_opt_check_correlation_postroute_icc.example.tcl, the following 
+   recommendation has been added to the comments:
+
+   # set timing_enable_non_sequential_checks TRUE
+
+
+New signoff_drc Step
+--------------------
+
+The signoff_drc_icc.tcl script has been added to run the signoff_drc command. The 
+content of this script was previously part of outputs_icc.tcl. 
+
+The step that precedes the signoff_drc_icc step is metal_fill_icc, and the subsequent step is outputs_icc.
+
+The makefiles have also been updated.
+
+
+Miscellaneous Updates
+---------------------
+
+*  In init_design_icc.tcl, the comments for set_critical_range have been updated.
+
+*  The usage of ICC_REPORTING_EFFORT has been updated across the flow.
+
+   o  The default is MED.
+
+   o  If ICC_REPORTING_EFFORT is set to OFF, no reporting is performed. 
+
+   o  If ICC_REPORTING_EFFORT is set to LOW, the report_qor, report_constraints, 
+      and report_power commands are not performed, and the 
+      report_timing command is not performed in clock_opt_cts.
+
+*  In common_route_si_settings_zrt_icc.tcl, the following workaround has been 
+   removed:
+
+   ## The following is to resolve an off-grid issue from STAR 9000458167.
+   #  Please refer to SolvNet article #032867 if you need more information.
+   #  This will be removed in 2010.12-SP4 RM release.
+   set routeopt_zrt_preserve_routes FALSE
+
+   This workaround was added in IC Compiler Reference Methodology 
+   version E-2010.12-SP2. 
+
+*  In metal_fill_icc.tcl and signoff_drc_icc.tcl, a workaround has been added to 
+   address STAR 9000440426 (Hercules - Could not open layer mapping file 
+   ../layer.map for reading),
+
+
+Lynx Compatibility
+------------------
+
+This release provides enhancements in the Lynx-Compatible reference methodology 
+flow. For information about these enhancements, see the file named 
+Release_Notes.LynxCompatible-RM.txt.
+
+*  The makefiles have been updated to redirect the log files to the logs/task 
+   directory. 
+
+   Previously, the makefiles saved the log files in the logs directory.
+
+*  A problem in the icc_setup.tcl file regarding $ICC_NUM_CORES has been fixed  
+
+*  In init_design_icc.tcl and signoff_opt_icc.tcl, the -exit option has been added 
+   to sproc_script_stop for early exit.
+
+
+E-2010.12-SP2
+=============
+
+The following sections describe new features, changes, and enhancements in the 
+IC Compiler Reference Methodology version E-2010.12-SP2.
+
+
+Robustness
+----------
+
+A new variable named COPY_FROM_MW_DESIGN_LIBRARY has been added. This variable 
+applies only when ICC_INIT_DESIGN_INPUT is set to MW.
+
+*  If the Milkyway design library specified by MW_DESIGN_LIBRARY exists and 
+   COPY_FROM_MW_DESIGN_LIBRARY is valid, the script removes the MW_DESIGN_LIBRARY 
+   design library and copies the design library specified by 
+   COPY_FROM_MW_DESIGN_LIBRARY.
+
+*  If the Milkyway design library specified by MW_DESIGN_LIBRARY exists and 
+   COPY_FROM_MW_DESIGN_LIBRARY is specified but invalid, the script issues an 
+   error message and uses the existing MW_DESIGN_LIBRARY design library.
+
+*  If the Milkyway design library specified by MW_DESIGN_LIBRARY does not exist and
+   COPY_FROM_MW_DESIGN_LIBRARY is specified, the script copies the design library 
+   specified by COPY_FROM_MW_DESIGN_LIBRARY.
+
+*  If the Milkyway design library specified by MW_DESIGN_LIBRARY does not exist and 
+   COPY_FROM_MW_DESIGN_LIBRARY is invalid, the script issues an error message and 
+   exits IC Compiler.
+
+The icc_setup.tcl and init_design_icc.tcl files have been updated.
+
+
+DFT Updates
+-----------
+
+The DFT section has been consolidated.
+
+*  In init_design_icc.tcl, the read_def SCANDEF command and associated commands have 
+   been moved out of the following sections:
+   
+   o  $ICC_INIT_DESIGN_INPUT == "MW"
+   o  $ICC_INIT_DESIGN_INPUT == "DDC"
+   o  $ICC_INIT_DESIGN_INPUT == "verilog"  
+
+*  In place_opt_icc.tcl, the read_def SCANDEF command and associated commands have 
+   been relocated and combined with the code in init_design_icc.tcl.
+
+*  The variables and usage remain the same.
+
+
+Physical Guidance Updates
+-------------------------
+
+*  In init_design_icc.tcl, the restrictions with read_floorplan have been removed 
+   on ICC_INIT_DESIGN_FLOORPLAN_PRE and ICC_INIT_DESIGN_FLOORPLAN_FP_FILE.
+
+*  In init_design_icc.tcl and place_opt_icc.tcl, some restrictions with IEEE 1801 
+   have been removed.
+
+   IEEE 1801 is also known as Unified Power Format (UPF),
+
+   Note that the restrictions with the feasibility flow remain.
+
+
+Updates for check_signoff_correlation
+-------------------------------------
+
+The comments in the following scripts have been improved to provide usage 
+suggestions:
+
+*  signoff_opt_check_correlation_preroute_icc.example.tcl
+*  signoff_opt_check_correlation_postroute_icc.example.tcl
+
+
+MVRC Support
+------------
+
+*  The IC Compiler Reference Methodology now supports the MVRC Static Verification
+   Reference Methodology scripts. See the README.MVRC-RM.txt and 
+   Release_Notes.MVRC-RM.txt files for complete details.
+
+
+Lynx Compatibility 
+------------------
+   
+This release provides enhancements in the Lynx-Compatible reference 
+methodology flow. For information about these enhancements, see the 
+file named Release_Notes.LynxCompatible-RM.txt.
+
+
+E-2010.12
+=========
+
+The following sections describe new features, changes, and enhancements in the 
+IC Compiler Reference Methodology version E-2010.12.
+
+
+Lynx Compatibility
+------------------
+
+This release provides enhancements in the Lynx-Compatible reference 
+methodology flow. For information about these enhancements, see the 
+file named Release_Notes.LynxCompatible-RM.txt.
+
+
+Floorplan Related Updates
+-------------------------
+
+*  The following comments have been added before the 
+   "read_def -verbose -no_incremental $ICC_IN_DEF_FILE" command 
+   in init_design_icc.tcl:
+
+   ## Need mapping if there are multiple sites in DEF and they do not match the MW 
+      tile names. 
+   #  Examples: 
+   #	set_app_var mw_site_name_mapping {{CORE unit}} OR   
+   #	set_app_var mw_site_name_mapping {{CORE unit} {CORE012 unit012} {CORE015 
+        unit015}}
+   #  In the example, CORE is the DEF site name and unit is the MW tile name.
+   #  This helps fix PSYN-267 issues: XXX has no associated site row defined in the 
+      floorplan.
+
+*  Comments for ICC_FLOORPLAN_INPUT have been updated in icc_setup.tcl:
+
+   set ICC_FLOORPLAN_INPUT "DEF"  ;# DEF | FP_FILE | CREATE | USER_FILE | SKIP; 
+                                    "DEF" reads $ICC_IN_DEF_FILE; 
+                                    "FP_FILE" reads ICC_IN_FLOORPLAN_FILE;
+                                  ;# "CREATE" uses initialize_floorplan command; 
+                                    "USER_FILE" sources $ICC_IN_FLOORPLAN_USER_FILE; 
+                                  ;# "SKIP" skips floorplanning section
+
+*  ICC_IN_TDF_FILE has been renamed to ICC_IN_PIN_PAD_PHYSICAL_CONSTRAINTS_FILE in 
+   icc_setup.tcl and init_design_icc.tcl.
+   
+   This change was made because the script should be written out by the 
+   write_pin_pad_physical_constraints command.
+
+
+Clock Tree Synthesis Updates
+----------------------------
+
+*  Self-gating insertion has been updated in clock_opt_psyn_icc.tcl.
+
+   o  A variable that allows you to control self gating has been added to 
+      icc_setup.tcl:
+
+      set ICC_CTS_SELF_GATING_SAIF_FILE	""  ;# SAIF file with clock activity 
+                                               information for self-gating logic 
+                                               insertion during clock tree synthesis
+
+   o  The following line has been added before the clock_opt -only_cts command to 
+      source a user-provided SAIF file for self gating:
+
+      # A SAIF file is required in order to enable the self-gating feature.
+      if {[file exists [which $ICC_CTS_SELF_GATING_SAIF_FILE]]} 
+          {read_saif -input $ICC_CTS_SELF_GATING_SAIF_FILE}
+
+   o  The following option has been added for the self-gating feature:
+
+      if {[file exists [which $ICC_CTS_SELF_GATING_SAIF_FILE]]} 
+          {lappend clock_opt_cts_cmd -insert_self_gating}
+
+*  The following comment has been added in common_cts_settings_icc.tcl:
+
+   ## Define NDR in general for spacings and widths
+   #  -spacing_length_thresholds <use 3-5x metal layer pitch>
+
+
+Multicorner-Multimode Related Updates
+-------------------------------------
+
+*  The -scenario option is now used by the report_clock_timing and report_clock_tree 
+   commands in all relevant scripts for multicorner-multimode designs.
+
+   The scripts have been updated by replacing the foreach loops in the scenarios  
+   with the -scenario option. The following example commands are from 
+   clock_opt_cts_icc.tcl: 
+
+   if {$ICC_REPORTING_EFFORT != "OFF" } {
+      if {[llength [get_scenarios -active true -setup true]]} {
+      redirect -file $REPORTS_DIR_CHIP_FINISH/$ICC_CLOCK_OPT_CTS_CEL.clock_timing 
+          {report_clock_timing -type skew -scenarios [get_scenarios -active true 
+          -setup true]} ;# local skew report
+      redirect -tee 
+          -file $REPORTS_DIR_CHIP_FINISH/$ICC_CLOCK_OPT_CTS_CEL.max.clock_tree 
+          {report_clock_tree -summary -scenarios [get_scenarios -active true 
+          -setup true]}     ;# global skew report
+      }
+      if {[llength [get_scenarios -active true -hold true]]} {
+      redirect -tee 
+          -file $REPORTS_DIR_CHIP_FINISH/$ICC_CLOCK_OPT_CTS_CEL.min.clock_tree 
+          {report_clock_tree -operating_condition min -summary -scenarios 
+          [get_scenarios -active true -hold true]} ;# min global skew report
+      }
+   }
+
+
+DFT Related Updates
+-------------------
+
+*  The default value of the DFT variable in icc_setup.tcl has been changed to TRUE:
+
+   set DFT TRUE
+
+   The reference methodology automatically enables scan optimization during a
+   place_opt run if a scan chain is detected. You can disable this behavior by 
+   setting the DFT variable to FALSE.
+
+*  In place_opt_icc.tcl, "[get_scan_chain]" has been added to the condition for 
+   check_scan_chain and report_scan_chain:
+
+   if {$DFT && !$ICC_DP_DFT_FLOW} {
+     ##Read Scan Chain Information from DEF
+     if {[file exists [which $ICC_IN_SCAN_DEF_FILE]] } { 
+          read_def $ICC_IN_SCAN_DEF_FILE
+     }  
+     if {[get_scan_chain] != 0} {
+          check_scan_chain
+          redirect -file $REPORTS_DIR_PLACE_OPT/scan_chain_pre_ordering.rpt 
+              {report_scan_chain}
+     }
+   }
+
+*  In place_opt_icc.tcl, "[get_scan_chain]" has been added to the condition for 
+   the place_opt command.
+   
+   if {$DFT && [get_scan_chain] != 0} {lappend place_opt_cmd -optimize_dft}
+
+*  In clock_opt_psyn_icc.tcl, the -optimize_dft option has been moved to the 
+   comments as an optional feature.
+   
+   The following comments have been added:
+
+   ## Use -optimize_dft if you have SCANDEF and there are scan nets with hold 
+      violations.
+   #  Note that scan wirelength can increase and may impact QoR.
+
+
+Multivoltage and Multisupply Related Updates
+--------------------------------------------
+
+*  The following variables have been added to icc_setup.tcl:
+
+   o  set ICC_AO_STRATEGY_SINGLE_POWER_POWER_DOMAIN_LIST ""
+   o  set CUSTOM_AO_STRATEGY_SINGLE_POWER_CREATE_BOUND_SCRIPT ""
+   o  set CUSTOM_AO_STRATEGY_SINGLE_POWER_SET_POWER_GUIDE_SCRIPT ""
+
+*  The following lines have been added in init_design_icc.tcl to allow you to 
+   set the single power always on strategy and source your customized create_bound and
+   set_power_guide scripts:
+
+   if {$ICC_AO_STRATEGY_SINGLE_POWER_POWER_DOMAIN_LIST != ""} {
+        ## Specify power domains for single_power always on strategy.
+        #  Default in IC Compiler is duel_power for all power domains.
+         set_always_on_strategy 
+               -object_list $ICC_AO_STRATEGY_SINGLE_POWER_POWER_DOMAIN_LIST 
+               -cell_type "single_power"
+
+        ## Script to create bound for single power always on cells
+        #    ex, create_bounds -name AO_WELL -coordinate {10 10 20 20} -exclusive
+        #  Note that boundary of bound should be within existing voltage area
+        if {[file exists $CUSTOM_AO_STRATEGY_SINGLE_POWER_CREATE_BOUND_SCRIPT]} {
+               source $CUSTOM_AO_STRATEGY_SINGLE_POWER_CREATE_BOUND_SCRIPT
+        }
+
+        ## Script to associate power guide with bounds created by 
+        #      $CUSTOM_AO_STRATEGY_SINGLE_POWER_CREATE_BOUND_SCRIPT
+        #    ex, set_power_guide -name AO_WELL
+        if {[file exists $CUSTOM_AO_STRATEGY_SINGLE_POWER_SET_POWER_GUIDE_SCRIPT]} {
+               source $CUSTOM_AO_STRATEGY_SINGLE_POWER_SET_POWER_GUIDE_SCRIPT
+        }
+   }
+
+*  The location of the "CONNECT P/G" section has been changed.
+
+   This change applies only if you select the UPF or NONUPF setting for the 
+   Multivoltage or Multisupply option when you download the scripts in RMgen. 
+   Note that IEEE 1801 is also known as Unified Power Format (UPF),
+
+   Previously, this section followed the "MV mode : Creating the physical MV 
+   objects" section. Now it follows the "MTCMOS CELL INSTANTIATION + CONNECTION" 
+   section.
+
+*  The associate_mv_cells and insert_mv_cells commands have been moved.
+ 
+   Previously, these commands followed the "Ascii as the format between DCT and ICC"
+   section, where the read_verilog command is performed. Now they follow the 
+   "MV mode : Creating the physical MV objects" section.
+
+*  The following command has been added to outputs_icc.tcl:
+
+   save_upf $RESULTS_DIR/$DESIGN_NAME.output.upf
+
+
+Updates in the Common Settings Scripts That are Sourced by Each Main Script
+---------------------------------------------------------------------------
+
+*  In common_optimization_settings_icc.tcl, lines have been added that allow 
+   the value to be reset to true:
+
+      if {$ICC_TIE_CELL_FLOW} {
+              set_auto_disable_drc_nets -constant false
+      } else {
+              set_auto_disable_drc_nets -constant true
+      }
+
+*  Because define_zrt_redundant_via is now persistent and stored in Milkyway, the 
+   comment has been updated by removing the following line in 
+   rm_icc_zrt_scripts/common_route_si_settings_zrt_icc.tcl:
+
+   ## define_zrt_redundant_vias is not persistent and should be run in every script 
+        you run insert_zrt_redundant_via
+
+*  The set_app_var enable_recovery_removal_arcs true command has been moved from 
+   common_post_cts_timing_settings.tcl to common_placement_settings_icc.tcl.
+
+
+Updates for the Alternative Flows
+---------------------------------
+
+*  As announced in the D-2010.03-SP4 release, the time to results (TTR) flow has 
+   now been made obsolete and removed from the IC Compiler Reference Methodology.
+
+   If you are interested in using fast turnaround time and fast design analysis, 
+   you can use the feasibility flow.
+
+   If you are switching from the TTR flow to the feasibility flow, you should be 
+   aware of the following information:
+
+   o  The feasibility flow does not include postroute optimization (route_opt_icc) 
+      by default. 
+
+      Instead, it stops at the route_icc step.
+
+   o  Synopsys does not recommend or support usage of feasibility results for final 
+      implementation.
+
+   All relevant scripts have been updated.
+
+*  In eco_icc.tcl, the timing-driven options for the Zroute flow are now disabled. 
+
+   The following lines have been added before the engineering change order (ECO)  
+   commands: 
+
+   ##This avoids extraction/timing hits
+   set_route_zrt_global_options -timing_driven false -crosstalk_driven false
+   set_route_zrt_track_options -timing_driven false -crosstalk_driven false
+   set_route_zrt_detail_options -timing_driven false
+
+*  In fm.tcl, the argument of the -libname option has been updated from 
+   ${MW_DESIGN_LIBRARY} to WORK:
+   
+   read_milkyway -r -no_pg -libname WORK \
+       -cell_name ${ICC_INPUT_CEL} ${MW_DESIGN_LIBRARY}
+
+
+Miscellaneous Updates in icc_setup.tcl for
+Reference Methodology Messages, Makefiles, and Variables 
+--------------------------------------------------------
+
+*  Script loading messages in icc_setup.tcl have been updated for subscripts sourced 
+   by the main scripts (scripts referenced in the makefiles). 
+
+   o  The following line has been added to the beginning of the scripts:
+
+      puts "RM-Info: Running script [info script]\n"
+
+   o  The following line has been added to the end of the scripts:
+
+      puts "RM-Info: Completed script [info script]\n"
+
+*  The names of the variables and the default values for the Makefiles have been 
+   updated:
+
+   LOG_DIR renamed to LOGS_DIR and default value is changed from log to logs or 
+       log_zrt to logs_zrt
+   REPORT_DIR renamed to REPORTS_DIR
+   OUTPUT_DIR renamed to REPORTS_DIR 
+
+*  The layout of icc_setup.tcl has been updated.
+
+   The locations of the variables with the ICC_CTS_* prefix have been adjusted and 
+   combined with the gate merge/split section.
+
+*  The default value of ICC_APPLY_RM_DERATING has been changed from TRUE to FALSE.
+
+   To enable the set_timing_derate command, set ICC_APPLY_RM_DERATING to TRUE and 
+   set appropriate values for ICC_EARLY_DERATING_FACTOR and 
+   ICC_LATE_DERATING_FACTOR.
+
+*  The default value of ICC_SANITY_CHECK has been changed from TRUE to FALSE.
+
+*  The check_physical_design command has been updated for place_opt_icc.tcl, 
+   clock_opt_cts_icc.tcl, and route_icc.tcl.
+
+   The -output option has been added to direct the outputs to predefined locations. 
+   For example, 
+
+   check_physical_design -stage pre_clock_opt -no_display \
+        -output $REPORTS_DIR_PLACE_OPT/check_physical_design.pre_place_opt
+
+*  The ICC_SIGNOFF_CEL variable has been removed from icc_setup.tcl, and the 
+   relevant scripts have been updated.
+
+
+D-2010.03-SP4
+=============
+
+This section describes new features, changes, and enhancements in the IC Compiler 
+Reference Methodology version D-2010.03-SP4.
+
+Multicorner-Multimode Updates
+-----------------------------
+
+*  The high capacity multicorner-multimode flow support has been removed.
+
+   -  In icc_setup.tcl, the following reference methodology variables have been 
+      removed:
+
+      ICC_MCMM_PLACE_OPT_HIGH_CAP
+      ICC_MCMM_CLOCK_OPT_HIGH_CAP
+
+   -  In rm_icc_(zrt)scripts/clock_opt_psyn_icc.tcl and 
+      rm_icc_scripts/place_opt_icc.tcl, the IC Compiler variables used to enable the high capacity multicorner-multimode flow have been removed.
+
+*  The mcmm.scenario.example has been updated.
+
+   -  The PT_SDC_*_FILE variables have been added.
+   
+      You can specify sign-off Synopsys Delay Constraints (SDC) constraints if they 
+      are different from the implementation SDC constraints specified by 
+      ICC_IN_SDC_*_FILE.
+
+      The "set_primetime_options -sdc_file" command has been updated to use 
+      PT_SDC_*_FILE if the file exists. The setting will be used by signoff_opt_icc step.
+
+   -  The sourcing sequence for ICC_IN_SDC_*_FILE and set_operating_conditions has 
+      been changed.
+
+      ICC_IN_SDC_*_FILE is now sourced before set_operating_conditions so that 
+      set_operating_conditions always overwrites the operating conditions defined in 
+      the SDC file.
+
+   -  A file existence check for STARRC_NXTGRD_*_FILE has been added.
+
+*  The checks for the clock tree synthesis only scenarios during the clock_opt_cts 
+   and clock_opt_route steps have been updated.
+
+   -  Previously: [get_scenarios -cts_mode true -setup false -hold false]
+   -  Now: [get_scenarios -cts_mode true -setup false]
+
+*  The sequence for check_physical_design and check_clock_tree commands has been 
+   updated in clock_opt_cts_icc.tcl.
+
+   The check_clock_tree command now only performs if check_physical_design is not enabled.
+
+   if {$ICC_SANITY_CHECK} {
+  	check_physical_design -stage pre_clock_opt -no_display
+   } else {
+   	check_clock_tree
+   }
+
+
+Check and Reporting Updates
+---------------------------
+
+*  The "report_qor -summary" command has been added to all steps.
+
+   The results are appended to the existing report_qor output. For example, the 
+   following results are appended at the end of place_opt_icc step:
+
+   redirect -tee -file $REPORTS_DIR_PLACE_OPT/$ICC_PLACE_OPT_CEL.qor {report_qor}
+   redirect -tee -file $REPORTS_DIR_PLACE_OPT/$ICC_PLACE_OPT_CEL.qor \
+      -append {report_qor -summary}
+
+*  The comments for "report_timing_histograph" command has been added to all steps.
+
+   Uncomment the commands to use them.
+   The results are appended to the existing report_qor output. 
+   Here are the comments added for place_opt_icc step when you set the Multicorner-Multimode Optimization 
+   option to TRUE in RMgen.
+
+   # redirect -tee -file $REPORTS_DIR_PLACE_OPT/$ICC_PLACE_OPT_CEL.qor -append {report_timing_histogram -range_maximum 0 -scenario [all_active_scenarios]}
+   # redirect -tee -file $REPORTS_DIR_PLACE_OPT/$ICC_PLACE_OPT_CEL.qor -append {report_timing_histogram -range_minimum 0 -scenario [all_active_scenarios]}
+
+*  The categorized timing report has been enhanced as follows:
+
+   -  The categorized timing report comment section has been added to the 
+      clock_opt_cts step.
+
+   -  The categorized timing report comment sections in place_opt_icc and 
+      clock_opt_cts have been updated.
+
+      It is recommended that you use this feature with the graphical user interface 
+      (GUI) open.
+
+*  The "check_physical_design -stage pre_route_opt -no_display" command has been 
+   added before the route_opt command in the route_opt_icc step.
+
+*  The report_power command has been added to the place_opt_icc, clock_opt_psyn, and
+   route_opt_icc steps if $ICC_REPORTING_EFFORT is set to MED and $LEAKAGE_POWER is 
+   set to TRUE (both are the default settings)
+
+   For example, after place_opt, you can check the report_power summary in the 
+   following output:
+
+   $REPORTS_DIR_PLACE_OPT/$ICC_PLACE_OPT_CEL.power
+
+
+TTR Flow Update
+---------------
+
+The time to results (TTR) flow will be retired in the E-2010.12 release. 
+
+*  If you are interested in using fast turnaround time and fast design analysis, 
+   you can use the feasibility flow.
+
+   To enable this flow, select FEASIBILITY for the "Focus on TTR or QoR or 
+   Feasibility" option in RMgen.
+
+*  If you switch from the TTR flow to the feasibility flow, you should be aware of 
+   the following information:
+
+   1. The feasibility flow does not include postroute optimization (route_opt_icc) 
+      by default. 
+
+      It ends at the route_icc step.
+
+   2. Synopsys neither recommends nor supports the usage of feasibility results for 
+      final implementation.
+
+This notice is printed in place_opt_icc.tcl, clock_opt_psyn_icc.tcl, and 
+route_opt_icc.tcl if you select TTR for the "Focus on TTR or QoR or Feasibility" 
+option in RMgen.
+
+
+Chip Finishing Updates
+----------------------
+
+*  The following enhancements have been made for antenna fixing:
+
+   -  In icc_setup.tcl, a new variable, ICC_PORT_PROTECTION_DIODE_EXCLUDE_PORTS,
+      has been added.
+      
+      This variable allows you to specify a list of ports to be excluded from diode insertion on the ports.
+
+   -  In clock_only_psyn_icc.tcl, the following lines have been added or updated to 
+      allow you to exclude certain ports from being inserted with protection diodes:
+  
+      set ports [remove_from_collection [get_ports * -filter "direction==in"] \
+         [get_ports $ICC_PORT_PROTECTION_DIODE_EXCLUDE_PORTS]]
+
+      insert_port_protection_diodes -prefix port_protection_diode -diode_cell \
+         [get_lib_cells $ICC_PORT_PROTECTION_DIODE] -port $ports -ignore_dont_touch
+  
+      Note that in the previous version, the -ignore_dont_touch option was not 
+      specified. In this release, this option has been added so that the feature 
+      also work on clock ports.
+
+      Use ICC_PORT_PROTECTION_DIODE_EXCLUDE_PORTS to specify clock ports if you want to exclude them.
+
+*  Support has been added for DEFAULT_VA in 
+   rm_icc_scripts/insert_mv_filler_cells.tcl
+
+*  For signal electromigration fixing, a new variable has been added to enable the 
+   signal electromigration fixing section in chip_finish_icc.tcl:
+
+   set ICC_FIX_SIGNAL_EM FALSE
+
+   Note that you still need to uncomment and modify this section before using it.
+
+
+Formality Update
+------------------
+
+By default, the following variable is now set to avoid messages printed in the log file for newly defined variables:
+
+   if {$synopsys_program_name == "fm_shell"} {
+   set_app_var sh_new_variable_message false
+   }
+
+
+Miscellaneous Updates
+---------------------
+
+*  get_lib_cells has been added to the hold time fix prefer cells control in 
+   common_post_cts_timing_settings.tcl
+
+   remove_attribute [get_lib_cells $ICC_FIX_HOLD_PREFER_CELLS] dont_touch
+   set_prefer -min [get_lib_cells $ICC_FIX_HOLD_PREFER_CELLS]
+
+*  Condition has been added for the set_auto_disable_drc_nets command in 
+   common_optimization_settings_icc.tcl
+
+   if {$ICC_TIE_CELL_FLOW} {set_auto_disable_drc_nets -constant false}
+
+
+D-2010.03-SP3
+=============
+
+This section describes new features, changes, and enhancements in the IC Compiler 
+Reference Methodology version D-2010.03-SP3.
+
+Multicorner-Multimode Updates
+-----------------------------
+
+All the clock-tree-synthesis-only scenarios are now disabled by default at the 
+beginning of each step except clock_opt_cts in the IC Compiler Reference Methodology
+flow. 
+
+*  The "set_active_scenarios -all" command at the beginning of each step has been 
+   updated as follows:
+
+   set_active_scenarios [lminus [all_scenarios] [get_scenarios -setup false -hold false -cts_mode true]]
+   ## Note: CTS only scenarios (get_scenarios -setup false -hold false -cts_mode true) are made inactive by RM during optimizations
+
+*  Synopsys Technical Action Request (STAR) number 9000402453, "implementation 
+   change suggested if CTS_ONLY scenarios exist," has been resolved.
+
+
+Clock Tree Synthesis Updates
+----------------------------
+
+Support has been added for clock shielding. This feature is turned off by default. 
+To enable it, set ICC_CTS_SHIELD_MODE to ALL or NAMES in icc_setup.tcl.
+
+*  Use "ALL" to apply the rule specified by $ICC_CTS_SHIELD_RULE_NAME to all the 
+   clocks in the design.
+
+*  Use "NAMES" to apply the rule specified by $ICC_CTS_SHIELD_RULE_NAME to the clock
+   nets specified by $ICC_CTS_SHIELD_CLK_NAMES only.
+   
+The following files have been updated:
+
+*  In icc_setup.tcl, new clock-shielding-related variables have been added. 
+
+   The variable names all begin with the "ICC_CTS_SHIELD_" prefix:
+
+   o  ICC_CTS_SHIELD_MODE
+   
+      Use this variable to enable clock shielding for all clocks or for the subset 
+      of clocks that you specify with the ICC_CTS_SHIELD_CLK_NAMES variable.
+      
+   o  ICC_CTS_SHIELD_RULE_NAME
+   
+      Use this variable to specify the name of the clock shielding rule.
+      
+   o  ICC_CTS_SHIELD_SPACINGS
+   
+      Use this variable, which is required by ICC_CTS_SHIELD_RULE_NAME, to specify 
+      the clock shield spacing with a list of layer name and spacing pairs.
+      
+   o  ICC_CTS_SHIELD_WIDTHS
+   
+      Use this variable, which is required by ICC_CTS_SHIELD_RULE_NAME, to specify 
+      the clock shield widths with a list of layer name and width pairs. 
+      
+   o  ICC_CTS_SHIELD_CLK_NAMES
+   
+      Use this variable, which is required if you set ICC_CTS_SHIELD_MODE to NAMES,
+      to specify the names of the clocks on which you want the shielding rule to be 
+      applied.
+
+*  In common_cts_settings_icc.tcl, a clock shielding nondefault routing rule has 
+   been added.
+
+*  In clock_opt_route_icc.tcl, a command has been added to generate clock shielding 
+   wires based on the clock shielding nondefault routing rule.
+
+
+Chip Finishing Update
+---------------------
+
+The signal electromigration (EM) fix section has been updated.
+
+*  The commands and examples for the signal electromigration fix flow have been 
+   revised. 
+
+   Uncomment the EM section to use the signal electromigration fix feature.
+
+*  The chip_finish_icc.tcl file has been updated.
+
+
+Timer Updates
+-------------
+
+*  The "set_app_var enable_recovery_removal_arcs true" variable has been moved from 
+   pre-clock tree synthesis to post-clock tree synthesis.
+
+*  The following variable has been added to common_post_cts_timing_settings_icc.tcl:
+
+   set_app_var enable_recovery_removal_arcs true
+
+*  The following variable has been removed from 
+   common_optimization_settings_icc.tcl:
+
+   set_app_var enable_recovery_removal_arcs true
+
+*  STAR number 9000400641, "RM and Lynx mismatch for timer settings post CTS," 
+   has been resolved.
+
+
+D-2010.03-SP2
+=============
+
+This section describes new features, changes, and enhancements in the IC Compiler 
+Reference Methodology version D-2010.03-SP2.
+
+*  Multicore support for all the core commands has been added through the
+   "set_host_options -max_cores $ICC_NUM_CORES" command.
+   
+   This command has been consolidated and now appears only in 
+   common_optimization_settings_icc.tcl, which is sourced at every step starting 
+   with place_opt_icc.
+
+   o  The "set_host_options -max_cores $ICC_NUM_CORES" command that was previously 
+      located in common_route_si_settings_zrt_icc.tcl is no longer needed and has 
+      been removed.
+
+   O  The "-num_cpus $ICC_NUM_CPUS" option has been removed from place_opt and the 
+      other placement-related commands.
+
+   The comments for the icc_setup.tcl variables ICC_NUM_CPUS and ICC_NUM_CORES have 
+   been updated. To enable multicore support for core commands on the local host, 
+   set ICC_NUM_CORES to a number that is larger than 1.
+ 
+   If you are using the classic router-based flow, you can set ICC_NUM_CPUS to a 
+   number that is larger than 1 to enable distributed processing for route_opt and 
+   insert_redundant_via.
+
+*  The redundant via insertion flow has been updated. 
+
+   The redundant via insertion command for clock_opt_route_icc step, 
+   "set_route_zrt_common_options -post_detail_route_redundant_via_insertion medium,"
+   has been removed.
+
+   A "Define double vias NDR" example and comments for clock nets have been added 
+   to common_cts_settings_icc.tcl. You can follow this example to define double via 
+   nondefault routing rules for clock nets.
+
+
+D-2010.03-SP1
+=============
+
+This section describes new features, changes, and enhancements in the IC Compiler 
+Reference Methodology version D-2010.03-SP1.
+
+Note: 
+   The D-2010.03-SP1 version of the IC Compiler Reference Methodology is compatible 
+   with IC Compiler version D-2010.03-SP1-1.
+
+Multicorner-Multimode and Multimode Clock Tree Synthesis Related Updates
+------------------------------------------------------------------------
+
+*  The variables ICC_MCMM_CTS_SCENARIO and ICC_MCMM_CTS_SCENARIO_IS_UNIQUE have been 
+   removed.
+   
+   To replace them, the mcmm.scenarios.example script has been updated with 
+   additional comments on the use of set_scenario_options. To specify clock tree 
+   synthesis scenarios, follow the instructions in mcmm.scenarios.example:
+
+   o  To specify a scenario as a clock tree synthesis scenario, use the
+      "set_scenario_options -cts_mode true" command.
+
+   o  To specify a scenario as a clock tree synthesis unique scenario, use the
+      "set_scenario_options -cts_mode true -setup false -hold false" command.
+
+   Consequently, in the clock_opt_cts_icc and clock_opt_route_icc steps,
+   
+   o  The "get_scenarios -cts_mode true" command is used to detect clock tree 
+      synthesis scenarios.
+      
+   o  The "get_scenarios -cts_mode true -setup false -hold false" command is 
+      used to detect clock tree synthesis unique scenarios.
+
+*  For each step, if the step-specific scenario variable is not specified, all 
+   scenarios are activated by default.
+   
+   For example, in the place_opt_icc step, if $ICC_MCMM_PLACE_OPT_SCENARIOS is not 
+   specified in icc_setup.tcl, the "set_active_scenarios -all" command is executed
+   at the beginning of the step. This means all the scenarios specified by your 
+   $ICC_MCMM_SCENARIO_FILE variable are active.
+
+   Use step-specific scenario variables, such as $ICC_MCMM_PLACE_OPT_SCENARIOS, 
+   to customize the active scenarios for each step.
+
+*  The ICC_CLOCK_OPT_MCCTO variable has been removed.
+
+   To specify a scenario for multimode clock tree optimization, use the 
+   "set_scenario_options -cts_corner string" command as instructed in 
+   mcmm.scenarios.example.
+
+*  All the get_cts_scenario commands in the scripts have been replaced with 
+   "get_scenario_options -cts_mode true" commands.
+
+
+Leakage Power Optimization Updates
+----------------------------------
+
+The flow that constrains the percentage of low threshold voltage cells without 
+considering the overall leakage power costs for leakage power optimization has been 
+added in the place_opt_icc, clock_opt_psyn_icc, and route_opt_icc steps.
+
+*  By default, when you enable leakage optimization, by setting $LEAKAGE_POWER to 
+   TRUE, the traditional leakage optimization flow is still used.
+
+*  To constrain the percentage of low threshold voltage cells without considering 
+   the overall leakage power costs for leakage power optimization, uncomment and 
+   edit the section "%LVT leakage power optimization flow (edit before using it)" 
+   in the scripts.
+
+
+UPF Updates
+-----------
+
+Support has been added for the low power implementation flow. 
+
+New variables, ICC_UPF_PM_CELL_EXISTING and ICC_UPF_PM_CELL_INSERTION, have been 
+added to icc_setup.tcl.
+
+*  Use ICC_UPF_PM_CELL_EXISTING to specify whether the design contains 
+   preexisting power management cells.
+
+   If ICC_UPF_PM_CELL_EXISTING is set to TRUE, it runs the associate_mv_cells 
+   command. You should review the reports before proceeding.
+   
+*  Set ICC_UPF_PM_CELL_INSERTION to TRUE to run the insert_mv_cells command.   
+
+
+Placement Optimization (place_opt) Related Updates
+--------------------------------------------------
+
+*  Comments have been added regarding saving the environment for the consistency 
+   checker utility.
+   
+   For more details, see SolvNet article number 026366.
+
+*  Comments have been updated in the relative placement section.
+
+*  Physical guidance flow support has been added.
+
+   A new option, Physical Guidance, has been added to RMgen on SolvNet. Set this 
+   option to TRUE if you want to use physical guidance information from Design 
+   Compiler Graphical.
+   
+   The UPF, feasibility, and time to results (TTR) configurations are not supported 
+   in the physical guidance flow. In RMgen, when you set the Physical Guidance 
+   option to TRUE, do not select the UPF, FEASIBILITY, or TTR settings.
+
+   Note:
+      To generate the physical guidance information by using the Design Compiler 
+      Reference Methodology, you must also set the Physical Guidance option to TRUE 
+      when you generate Design Compiler Reference Methodology scripts. 
+
+   After downloading the generated scripts,
+   
+   o  You must not add commands that modify the netlist or floorplan in the 
+      init_design_icc and place_opt_icc steps before the "place_opt -spg" command 
+      is run.
+
+   o  You must use a binary design format, Synopsys logical database format (.ddc)  
+      or Milkyway, from the Design Compiler Reference Methodology output.
+      
+      This means the $ICC_INIT_DESIGN_INPUT == "Verilog" flow is not supported and 
+      has been omitted.
+
+   o  You must use a floorplan from the Design Compiler Reference Methodology 
+      output, such as a Design Exchange Format (DEF) file.
+      
+      The $ICC_FLOORPLAN_INPUT == "CREATE" and $ICC_FLOORPLAN_INPUT == "FP_FILE" 
+      flows are not supported and have been omitted.
+
+*  The -area_recovery option has been added to the place_opt_feasibility command.
+
+
+Clock Tree Synthesis Related Updates
+------------------------------------
+
+*  The core commands in the clock_opt_cts step have been updated with the use of 
+   the lappend command.
+
+*  For $ICC_CTS_INTERCLOCK_BALANCING, a condition has been added that checks the 
+   existence of $ICC_CTS_INTERCLOCK_BALANCING_OPTIONS_FILE before enabling
+   the -inter_clock_balance option for the clock_opt command.
+
+*  Support has been added for the clock_opt_feasibility command. 
+
+   If you select FEASIBILITY for the "Focus on TTR or QoR or Feasibility" option in 
+   RMgen, the clock_opt_feasibility command is used in the clock_opt_psyn step.
+
+
+Chip Finishing Related Updates
+------------------------------
+
+*  For the Zroute flow, the concurrent redundant via insertion setting 
+   "set_route_zrt_common_options -concurrent_redundant_via_mode reserve_space" 
+   in common_route_si_(zrt)_settings_icc.tcl has been moved to route_icc.tcl 
+   prior to the route_opt command.
+   
+   This setting now requires the $ICC_DBL_VIA_FLOW_EFFORT == "HIGH" variable 
+   setting. If it is enabled before route_opt, it is disabled automatically after 
+   route_opt.
+
+*  For antenna prevention, "remove_attribute $ICC_PORT_PROTECTION_DIODE dont_use" 
+   has been added before the insert_port_protection_diodes command in the 
+   clock_opt_psyn step.
+
+*  A check has been added in chip_finish_icc and signoff_opt_icc steps to see 
+   if the list is empty before running insert_stdcell_filler on $FILLER_CELL_METAL 
+   or $FILLER_CELL.
+
+
+Signoff Related Updates
+-----------------------
+
+Support for the check_signoff_correlation command has been added in the 
+place_opt_icc and route_opt_icc steps. Two new variables have been added to 
+icc_setup.tcl.
+
+*  Specify ICC_SIGNOFF_OPT_CHECK_CORRELATION_PREROUTE_SCRIPT to allow sourcing of 
+   your script of choice at the end of the place_opt_icc step.
+
+   The script should contain your desired set_primetime_options, 
+   set_starcxt_options, and "check_signoff_correlation -preroute" commands. You can 
+   use the signoff_opt_check_correlation_preroute_icc.example.tcl as a starting point.
+
+*  Specify ICC_SIGNOFF_OPT_CHECK_CORRELATION_POSTROUTE_SCRIPT to allow sourcing of 
+   your script of choice at the end of the route_opt_icc step.
+   
+   The script should contain your desired set_primetime_options, 
+   set_starcxt_options, and check_signoff_correlation commands. You can use the 
+   signoff_opt_check_correlation_postroute_icc.example.tcl as a starting point.
+
+
+Miscellaneous Updates
+---------------------
+
+*  The read_sdc command in init_design_icc step has been moved from before load_upf 
+   to after load_upf.
+
+*  The common_post_cts_timing_settings.tcl file has been updated.
+
+   o  The line "remove_attribute $ICC_FIX_HOLD_PREFER_CELLS dont_use" has been 
+      removed because it is no longer needed.
+
+   o  The line "set_fix_hold_options -preferred_buffer" has been added to allow hold 
+      fix to ignore the dont_use attribute.
+
+      Hold fix now ignores the dont_use attribute automatically.
+
+*  Support has been added for the categorized timing report. 
+
+   The query_qor_snapshot command has been added in comments at the end of the 
+   place_opt_icc and clock_opt_pysn_icc steps.
+
+
+D-2010.03
+=========
+
+This section describes new features, changes, and enhancements in the IC Compiler 
+Reference Methodology version D-2010.03.
+
+Lynx Compatibility
+------------------
+
+This release introduces Lynx-compatible versions of the reference methodology 
+scripts, which you can select in RMgen on SolvNet.
+   
+For more information about the Lynx-compatible reference methodology scripts, see 
+SolvNet article number 029774 at https://solvnet.synopsys.com/retrieve/029774.html.
+
+
+Directory Structure Changes
+---------------------------
+
+The reference methodology directory structure has been reorganized for all 
+versions of the product reference methodologies.
+
+*  The setup files and makefiles have been moved to a new directory named 
+   rm_setup.
+
+*  The scripts directory has been renamed rm_<prod>_scripts, where <prod> is 
+   the product identifier: dc, icc, pt, or tmax.
+
+These changes are the same for every product reference methodology and apply to 
+both the standard and Lynx-compatible versions of the reference methodology scripts. 
+
+The working directory structure depends on whether you are using standard 
+reference methodology scripts or Lynx-compatible reference methodology scripts.
+
+Due to the directory structure change, the procedure for running the reference
+methodology scripts has changed from previous releases. For example, to run the 
+IC Compiler Reference methodology scripts, enter
+
+   % make -f rm_setup/Makefile_zrt ic  
+   
+See README.ICC-RM.txt if you need more details.
+
+
+General Updates
+---------------
+
+*  The DFT Optimization, Dynamic Power Optimization, and Leakage Power Optimization 
+   options have been removed from RMgen and converted to icc_setup.tcl variables.
+   
+   You can control whether these optimizations are performed by setting the DFT, 
+   DYNAMIC_POWER, and LEAKAGE_POWER variables in icc_setup.tcl. All scripts have 
+   been updated.
+
+*  The read_io_constraints and write_io_constraints commands have been replaced by 
+   the read_pin_pad_physical_constraints and write_pin_pad_physical_constraints
+   commands. The init_design_icc.tcl file has been updated.
+
+*  New variables, PLACE_OPT_EFFORT and ROUTE_OPT_EFFORT, have been added to allow 
+   you to control the effort level options for the place_opt and route_opt commands. 
+   
+   The default option value is medium. These variables are available only when you 
+   select the QOR setting for the "Focus on TTR, QoR, or Feasibility" option in 
+   RMgen.
+
+*  A new variable, PLACE_OPT_CONGESTION, has been added to allow you to control the
+   -congestion option in the place_opt.
+   
+   The default setting is TRUE. This variable is available only when you select the 
+   QOR or FEASIBILITY setting for the "Focus on TTR, QoR, or Feasibility" option in 
+   RMgen.
+
+*  Comments for the set_clock_gating_check commands have been added in the 
+   init_design_icc.tcl file.
+   
+
+Multicorner and Multimode Related Updates
+-----------------------------------------
+
+*  A new variable, ICC_MCMM_CTS_SCENARIO_IS_UNIQUE, has been added to control 
+   whether the clock tree synthesis scenario can be optimized by clock tree 
+   synthesis only (TRUE) or by clock tree synthesis and other optimization 
+   steps (FALSE).
+
+*  In mcmm.scenarios.example, the examples are now based on on-chip variation 
+   (OCV) instead of best-case and worst-case.
+
+*  The signoff_opt command now supports multicorner and multimode.
+   
+   The signoff_opt_icc.tcl file has been updated to support multicorner and 
+   multimode. The report_primetime_options and report_starrcxt_options commands 
+   have been added for each scenario in mcmm.scenarios.example. 
+
+
+Clock Tree Synthesis Updates
+----------------------------
+
+*  Interclock delay balancing has been moved from clock_opt_cts_icc.tcl to 
+   init_design_icc.tcl.
+
+*  When ICC_REPORTING_EFFORT is set to low, the report_qor, report_constraints, 
+   and report_timing commands are skipped during the clock_opt_cts stage. 
+
+   The clock_opt_cts_icc.tcl file has been updated.
+
+*  In previous releases, selecting TTR for the ICC_STRATEGY option in
+   RMgen caused a different setting to be used in set_delay_calculation. 
+   This difference has now been removed.
+
+   The icc_scripts/clock_opt_route_icc.tcl file has been updated.
+
+*  For the classic router flow, route_group has been added after 
+   "clock_opt -only_psyn" to exit the clock tree synthesis frozen skew mode.
+  
+   The clock_opt_psyn_icc.tcl file has been updated.
+
+*  Comments have been added to set_clock_tree_options to control the 
+   max_transition, max_capacitance, and target_skew options.
+
+   The common_cts_settings_icc.tcl file has been updated. 
+
+
+Zroute Updates
+--------------
+
+For the Zroute-based flow, the "set_route_mode_options -zroute true" command has 
+been removed from the following files in the icc_zrt_scripts directory because 
+Zroute is now enabled by default:
+
+*  clock_opt_route_icc.tcl
+*  route_icc.tcl 
+*  route_opt_icc.tcl
+
+For the classic router flow, the "set_route_mode_options -zroute false" command has 
+been added to the following files in the icc_scripts directory to explicitly disable
+Zroute.
+
+*  clock_opt_route_icc.tcl
+*  route_icc.tcl 
+*  route_opt_icc.tcl
+
+The makefiles, Makefile_zrt and Makefile, are still used to run the Zroute-based and 
+classic router-based reference methodology scripts respectively. For general
+information about the tool invocation, see README.ICC-RM.txt.
+
+
+Updates Related to the route_icc, route_opt_icc, and chip_finish_icc steps
+--------------------------------------------------------------------------
+
+*  New controls for crosstalk reduction have been added in 
+   rm_icc_zrt_scripts/common_route_si_settings_icc.tcl.
+   
+   This includes the set_route_opt_zrt_crosstalk_options command syntax and 
+   examples.
+
+*  The "set_app_var psyn_onroute_disable_fanout_drc true" command has been removed 
+   from common_route_si_settings_icc.tcl in both rm_icc_scripts and 
+   rm_icc_zrt_scripts.
+
+*  The snapshot command at the end of route_icc.tcl has been changed to 
+   gui_write_window_image.
+
+*  The route_opt command usage has been updated.
+
+   Comments have been added regarding control of power-aware optimization and 
+   power recovery. The route_opt_icc.tcl file has been updated.
+
+*  Comments on reshielding in rm_icc_zrt_scripts/chip_finish_icc.tcl have been 
+   updated for the "set_route_zrt_common_options -reshield_modified_nets reshield" 
+   command.
+
+
+Updates for focal_opt Command Usage
+-----------------------------------
+
+*  The focal_opt command is now a standalone step. Previously, it was part of 
+   the chip_finish step.
+
+   The following files have been updated: 
+      
+   o  Makefiles 
+   o  chip_finish_icc.tcl 
+   o  focal_opt_icc.tcl 
+
+   The ICC_FOCAL_OPT variable has been removed from icc_setup.tcl and the 
+   scripts.
+
+*  The following new variables have been added in icc_setup.tcl to control the 
+   focal_opt options -drc_nets, -drc_pins, and -xtalk_reduction:
+
+   o  ICC_FOCAL_OPT_DRC_NET_VIOLS
+   o  ICC_FOCAL_OPT_DRC_PIN_VIOLS
+   o  ICC_FOCAL_OPT_XTALK_VIOLS
+
+*  Because focal_opt is now an independent step, you can control the starting 
+   CEL view and saved CEL view names by using the following new variables:
+
+   o  ICC_FOCAL_OPT_STARTING_CEL, which defaults to $ICC_CHIP_FINISH_CEL 
+   o  ICC_FOCAL_OPT_CEL.
+
+
+Metal Fill Related Updates
+--------------------------
+
+*  The signoff_metal_fill support has been removed for 
+   -timing_preserve_hold_slack_threshold $TIMING_PRESERVE_SLACK_HOLD.
+
+   The metal_fill_icc.tcl and icc_setup.tcl files have been updated.
+
+*  The set_extraction_options command in metal_fill_icc.tcl has been updated.
+
+   The value used by the -real_metalfill_extraction option is set to FLOATING before 
+   the "save_mw_cel -as $ICC_METAL_FILL_CEL" command.
+   
+   If the $ICC_METAL_FILL_TIMING_DRIVEN variable is set to TRUE, the 
+   -real_metalfill_extraction option is set to NONE before the metal fill insertion 
+   command runs and is then reset to FLOATING when metal fill insertion has been 
+   completed. 
+
+
+Updates That Affect the write_verilog Options and Comments
+----------------------------------------------------------
+
+*  The outputs_icc.tcl file has been updated.
+
+*  The "-pg -supply_statement none" options are used if design is UPF.
+
+*  Different outputs are generated for use with Formality, layout versus 
+   schematic (LVS), and comparison with a Design Compiler netlist.
+
+
+Updates for create_ilm Command Usage
+------------------------------------
+
+The following files have been updated: 
+
+*  In outputs_icc.tcl, there is now no difference in the commands used for the 
+   UPF and non-UPF flows.
+
+   Comments have been added for the -scenario option, the write_interface_timing 
+   command, and the compare_interface_timing command.
+
+*  In prepare_block_dp.tcl, comments have been added to the 
+   select_block_scenario command and removed from the -include_xtalk option.
+
+*  In init_design_icc.tcl, a select_block_scenario comment has been added.
+
+
+Engineering Change Order (ECO) Updates
+--------------------------------------
+
+The variables ICC_PRE_ECO_CEL and ICC_POST_ECO_CEL in icc_setup.tcl have been 
+renamed to ICC_ECO_STARTING_CEL and ICC_ECO_CEL respectively.
+
+
+New Flip Chip Flow for Flat Design Support
+------------------------------------------
+
+Set the Flip Chip Design Style option to TRUE in RMgen if you want the  
+generated scripts to include flip chip support.
+
+For more information about the flip chip flow, 
+see SolvNet article number 025348
+
+A new file, rm_icc_dp_scripts/flip_chip.tcl, contains all the flip chip flow steps.
+
+The following files have been enhanced:
+
+*  In init_design_icc.tcl, sourcing of flip_chip.tcl has been added. 
+
+*  In icc_setup.tcl, new variables with the prefix ICC_FLIP_CHIP_ have been 
+   added.
+
+
+New Formality Verification Flow Support
+---------------------------------------
+
+Formality performs verification of the netlist going into IC Compiler versus the 
+Verilog netlist created by IC Compiler.
+
+A new file, rm_icc_scripts/fm.tcl, runs Formality after the outputs_icc step is 
+completed. Enter the following command to run Formality:
+
+   % fm_shell -f rm_icc_scripts/fm.tcl | tee log_zrt/fm.log (or log/fm.log)
+
+
+New Step-Specific Reporting Directories
+---------------------------------------
+
+New variables, REPORTS_DIR_*, have been added for step-specific reporting 
+directories.
+
+If you want to have a specific report directory for each step, use the REPORTS_DIR_* 
+variables instead of the REPORTS_DIR variable. By default, the tool writes all the 
+reports to REPORTS_DIR and there is no impact on existing usage.
+
+The icc_setup.tcl file and all scripts have been updated. 
+
+
+New Checkpoint Strategy Support
+-------------------------------
+ 
+Support has been added for set_checkpoint_strategy through a new variable, 
+ICC_ENABLE_CHECKPOINT, in icc_setup.tcl.
+
+When this variable is set to true, set_checkpoint_strategy is applied to the
+place_opt, clock_opt_cts, clock_opt_psyn, and route_opt stages.
+Please ensure there's enough disk space before enabling this feature.
+The -overwrite option is used by default. Remove it if needed.

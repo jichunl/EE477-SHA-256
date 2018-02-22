@@ -1,0 +1,10 @@
+##############################################################
+# Reference methodology option settings selected by the user.
+#
+# Copyright (C) 2016 Synopsys, Inc. All rights reserved.
+##############################################################
+ 
+Option Name:  Setting
+=====================
+Physical Data Input:  LEF_IN
+
