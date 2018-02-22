@@ -15,13 +15,13 @@
 // 	v_o:		indicates that this module has produced valid outputfe
 // 	digest_o:	the result of hashing
 
-module SHA256_core (parameter ring_width_p="inv")
+module SHA256_core 
 	(input 				clk_i
 	,input 				reset_i
 	,input 				en_i
 	,input 				v_i
 	,input 				yumi_i
-	,input	[ring_width_p-1:0]	msg_i
+	,input	[255:0]			msg_i
 
 	,output 			ready_o
 	,output 			v_o
@@ -63,7 +63,13 @@ module SHA256_core (parameter ring_width_p="inv")
 	
 	wire 	[511:0] 	pre_proc_msg;
 	reg 	[63:0][31:0] 	Wt_ary;	 
-	reg 	[7:0][31:0]     word_reg;
+	reg 	[255:0]    	digest_r;
+	reg     		cycle_counter_r;
+	reg	[31:0]		Kt_r;
+	reg	[31:0]		Wt_r;
+	reg	[255:0]		msg_r;
+
+
 
 
 	SHA256_pre_processing 
@@ -75,6 +81,13 @@ module SHA256_core (parameter ring_width_p="inv")
 		msg_sch	(.M_i(pre_proc_msg)
 			,.Wt_o(Wt_ary)
 			);
+
+	SHA256_compression
+		comp	(.message_i({msg_r})
+			,.Kt(Kt_r)
+			,.Wt(Wt_r)
+			,.digest_o(digest_r)
+			);
 	
 	// define cases
 	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
@@ -83,7 +96,8 @@ module SHA256_core (parameter ring_width_p="inv")
 	always_ff @(posedge clk_i)
 		substate_r <= reset_i ? eWait : substate_next;
 
-	
+	assign v_o = (substate_r == eDone);
+	assign ready_o = (substate_r == eWait);
 	
 
 	
@@ -92,22 +106,39 @@ module SHA256_core (parameter ring_width_p="inv")
 			eWait: begin // Waiting for the input
 				if (v_i & ready_o) begin
 					substate_next = eBusy;
-				
+					msg_r = {h7, h6, h5, h4, h3, h2, h1, h0};
+					cycle_counter_r = 0;
+					Kt_r = K[0];
+					Wt_r = Wt_ary[0][31:0];
 				end else begin
 					substate_next = eWait;
 				end
 		 	end
 		
 			eBusy: begin // Calculating the hash value
-				if ()
-
+				if (cycle_coutner_r < 64) begin
+					substate_next = eBusy;
+					msg_r = digest_r;
+					Kt_r = Kt[cycle_counter_r];
+					Wt_r = Wt_ary[cycle_counter_r];
+				end else begin
+					substate_next = eDone;
+				end
 			end
 
-			eDone:
-			
+			eDone: begin // Done with the calculation
+				if (yumi_i) begin
+					substate_next = eWait;
+				end
+									
 			end
 
-			default: begin:w
-
+			default: begin
+				if (reset_i) begin
+					substate_next = eWait;
+				end
+			end
+		endcase
+endmodule
 
 
