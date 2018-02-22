@@ -1,0 +1,64 @@
+
+*********************************************************************************
+** Stand-alone StarRC Reference Methodology 				       **
+** Gate Level Flow							       **
+** Version: J-2014.12 (January 12, 2015) 		         		       **
+** Copyright (C) 2010-2015 Synopsys, Inc. All rights reserved.		       **
+*********************************************************************************
+
+
+
+***********	SETUP	  ********** 
+
+* Specify block name for parasitic extraction
+BLOCK:  <block_name>
+
+* Provide the input Milkyway design database 
+MILKYWAY_DATABASE:  <milkyway_design_library>
+
+
+* Specify nxtgrd file which consists of capacitance models
+TCAD_GRD_FILE:  <nxtgrd_file>
+
+* Provide the mapping file in which design layers mapped to process layers 
+MAPPING_FILE:  <mapping_file>
+
+* Reduction setting fro STA Analysis
+REDUCTION: NO_EXTRA_LOOPS 
+
+* Use '*' to extract all signal nets in the design. Otherwise, provide the net names to be extracted separated by a space. Wildcards '?' and '!' are accepted for net names
+NETS: *
+
+* Use 'RC' to perform resistance and capacitance extraction on the nets
+EXTRACTION: RC 
+
+* Provide operating temperature in degree celsius at which extraction is performed
+OPERATING_TEMPERATURE: <temperature_in_celsius> 
+
+
+
+***********     SKIPPING ALL CELLS **********
+
+SKIP_CELLS: * 
+
+
+* Metal fill database type will be aligned to skip cells additional layout file type if skip cell addtional layout contents is selected
+
+***********     PARASITIC OUTPUT       **********
+
+COUPLE_TO_GROUND: NO 
+
+
+NETLIST_FORMAT: SPEF 
+
+* Provide the name of a file to which output parasitic netlist is written
+NETLIST_FILE: ./results/<netlist_file>.spef 
+
+
+* Provide the name of a summary file to which runtime and memory usage is written
+SUMMARY_FILE: ./rm_setup/<summary_file>.star_sum 
+
+* Provide the working directory name to which StarRC internal information is written in binary
+STAR_DIRECTORY: ./reports/<star_directory> 
+
+

@@ -1,0 +1,68 @@
+********************************************************************************
+** Stand-alone StarRC Gate Level Flow
+**
+** Created based on Solvnet reference methodology.
+**   https://solvnet.synopsys.com/rmgen/starrc-options.jsp
+**
+** Refer to StarRC User Guide for detailed explanations of settings.
+**
+** Refer to https://solvnet.synopsys.com/retrieve/023289.html for extraction
+** correlation between IC Compiler and StarRC.
+********************************************************************************
+
+*********** SETUP **********
+
+* Specify Milkyway CEL name for parasitic extraction.
+BLOCK:
+
+* Provide the input Milkyway design database.
+MILKYWAY_DATABASE:
+
+* Specify nxtgrd file which consists of capacitance models.
+TCAD_GRD_FILE:
+
+* Provide the mapping file in which design layers mapped to process layers.
+MAPPING_FILE:
+
+* Use '*' to extract all signal nets in the design.
+* Otherwise, provide the net names to be extracted separated by a space.
+* Wildcards '?' and '!' are accepted for net names
+NETS: *
+
+* Use 'RC' to perform resistance and capacitance extraction on the nets.
+EXTRACTION: RC
+
+* Provide operating temperature in degree celsius at which extraction is performed.
+OPERATING_TEMPERATURE: 25
+
+* Outputs geometric information about parasitic resistors as comments in the netlist.
+NETLIST_TAIL_COMMENTS: YES
+
+* Sets the level of extraction accuracy versus speed: 200 | 400
+MODE: 200
+
+*********** CELL CONTENT EXTRACTION **********
+
+* Provide the list of macro cells separated by a space.
+* Wildcards '*', '!' and '?' are accepted for macro names.
+* If cell is listed, extraction is performed on the content inside macro cell.
+* This leads to more accurate parasitics in the netlist but extraction run time is longer.
+* User makes judgement between accuracy and run time tradeoff.
+SKIP_CELLS:
+
+*********** PARASITIC OUTPUT **********
+
+COUPLE_TO_GROUND: YES
+
+NETLIST_FORMAT: SPEF
+
+* Provide the name of a file to which output parasitic netlist is written
+NETLIST_FILE:
+
+REDUCTION: TOPOLOGICAL
+
+* Provide the name of a summary file to which runtime and memory usage is written
+SUMMARY_FILE: summary.log
+
+* Provide the working directory name to which StarRC internal information is written in binary
+STAR_DIRECTORY:

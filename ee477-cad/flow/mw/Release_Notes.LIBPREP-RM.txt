@@ -1,0 +1,86 @@
+####################################################################################
+# Physical Library Preparation Reference Methodology Release Notes
+# Version: K-2015.06 (July 13, 2015)
+# Copyright (C) 2007-2015 Synopsys, Inc. All rights reserved.
+####################################################################################
+
+K-2015.06
+============
+1. Revised 'bpv.tcl' to remark 'make_macro hierarchical_smash' option
+
+J-2014.09
+============
+
+1. New options in rm_setup/libprep_setup.tcl:
+   set update_dio_type 1 ; # 1=yes 0=no
+   set extract_fram_property 0 ; # 1=run(default) 0=skip
+   set implant_width 1 ; # 1=true 0=false
+   set diffusion_width_height 1 ; # 1=true 0=false
+   set source_drain_annotation "" ; # file name for source drain annotation
+   set tile_name "" ; #  The default name is "unitTile"
+   set detailed_wire_track_report 0 ; # 1=true 0=false
+
+2. New feature for bpv.tcl
+   - Added "extract_fram_property" feature
+   - Output FRAM property report in dump/report_fram_property.out
+
+3. Revised script for wire_tracks.tcl
+   - Removed script for automated method because axgDefineWireTracks can
+     calculate the wire tracks automatically. 
+
+4. New feature for check_wire_tracks.tcl
+   - axgCheckWireTrack is enhanced in J-2014.09
+   - Support detailed wire track checking report
+
+5. New feature for diode_ports.tcl
+   - Set mask_layout_type of diode cell as "antenna" for MV design
+
+6. New feature for lib_db.tcl
+   - Support -update_antenna_diode_type option for MV design
+
+7. New version for analyze_lib.tcl
+   - Updated SYNOPSYS Pin Access Check Utility VER 5.0 (07/02/2014)
+
+I-2013.12
+============
+
+Added support for double patterning technology for the precolored flow.
+
+Added support for extended layer mode in the "create_ref_libs" step.
+
+Changed antenna extraction engine from Hercules to IC Validator in the
+"extract_antenna" step.
+
+Added support for v0 and m0 layers for antenna extraction in the 
+"extract_antenna" step.
+
+Added support for specifying the top macro name in the "read_gds" step.
+
+Revised cell collection by using Tcl in the "read_gds" step.
+ 
+H-2013.03
+============
+
+Added standard cell pin access check utility in LIBPREP-RM
+  - New "analyze_lib" step is added for standard cell pin access check.
+  - The document "README.check_std_cell_pin_access.pdf" is added.
+  - The "rm_setup/libprep_setup.tcl" is updated. New variables are
+    $run_pin_access, $run_routing, $check_cell_list, and $icc_platform.
+  - The "rm_setup/Makefile_gds_in" and "rm_setup/Makefile_lef_in" are updated 
+    for new step "analyze_lib".
+
+New "libprep_setup.rep" file is written to ./dump directory for setting review.  
+  
+G-2012.06-SP2
+============
+
+The bpv.tcl script has been updated for both the GDS_IN and LEF_IN flows.
+Unnecessary transfer_pin_on_layer option settings have been converted to
+comment lines.
+
+G-2012.06
+=============
+
+This is the GA release of the Physical Library Preparation Reference
+Methodology.
+

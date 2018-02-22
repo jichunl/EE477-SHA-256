@@ -1,0 +1,116 @@
+####################################################################################
+# MVRC Static Verification Reference Methodology Release Notes
+# Version: G-2012.06-SP4 (January 11, 2013)
+# Copyright (C) 2011-2013 Synopsys, Inc. All rights reserved.
+####################################################################################
+
+G-2012.06 and G-2012.06-SP4
+===========================
+
+These releases of the MVRC Static Verification Reference Methodology do not include 
+any product-specific changes. However, they do provide support for the enhancements 
+in the Lynx-compatible reference methodology flow. For information about these 
+enhancements, see the file named Release_Notes.LynxCompatible-RM.txt.
+
+
+F-2011.09-SP2 and F-2011.09-SP4
+===============================
+
+These releases of the MVRC Static Verification Reference Methodology do not include 
+any product-specific changes. However, they do provide support for the enhancements 
+in the Lynx-compatible reference methodology flow. 
+
+For the Design Compiler Reference Methodology, which did not participate in the 
+F-2011.09-SP2 reference methodology release, the Lynx-compatible reference 
+methodology enhancements take affect in the F-2011.09-SP4 release.
+
+For information about the Lynx-compatible reference methodology enhancements, 
+see the file named Release_Notes.LynxCompatible-RM.txt.
+
+
+F-2011.09
+=========
+
+General Updates
+---------------
+
+The sh_continue_on_error variable is now set to true to match the behavior 
+of other Synopsys tools.
+
+
+Changes in mvrc(_top).tcl for the Design Compiler Reference Methodology
+-----------------------------------------------------------------------
+
+*  The MVRC_RTL_READ_SCRIPT variable is now defined in both the standard and 
+   Lynx-compatible reference methodology flows to resolve a problem in previous 
+   releases.
+
+*  The script has been updated to use MVRC_RTL_READ_SCRIPT when you select the 
+   AUTOREAD setting for the RTL Source Format option in RMgen. 
+   
+   This variable is necessary because Design Compiler does not write an RTL read 
+   script for MVRC. Previous releases used the MVRC_RTL_AUTOREAD_SCRIPT variable 
+   when you selected the AUTOREAD setting. 
+
+
+Lynx Compatibility 
+-------------------
+
+This release provides enhancements in the Lynx-compatible reference 
+methodology flow. For information about these enhancements, see the 
+file named Release_Notes.LynxCompatible-RM.txt.
+
+
+E-2010.12-SP4
+=============
+
+This release of the MVRC Static Verification Reference Methodology provides 
+enhancements in the Lynx-Compatible reference methodology flow. For information 
+about these enhancements, see the file named Release_Notes.LynxCompatible-RM.txt.
+
+
+E-2010.12-SP2
+=============
+
+General Updates
+---------------
+
+*  The MVRC Static Verification Reference Methodology scripts have been enhanced to 
+   support tool enhancements in MVRC version E-2011.03.
+
+*  A new capability has been added to run MVRC on PG netlists from top-down or 
+   block-level place and route output in the IC Compiler Reference Methodology. 
+
+
+Changes in mvrc(_top).tcl for the Design Compiler Reference Methodology
+-----------------------------------------------------------------------
+
+*  The alias procedure to support the source -echo -verbose command has been removed.
+
+*  The synopsys_program_name string setting "mvrc_shell" is no longer needed.
+   
+   The synopsys_program_name string is now set to "mvrc" in the tool.
+
+*  Tool command language (Tcl) glob commands are now used in the search_searchpath 
+   routine instead of the exec commands.
+
+*  The search_path and link_library variable settings have been removed. 
+
+   MVRC now uses the search_path and link_library variable settings from 
+   dc_setup.tcl.
+
+*  The read_verilog and read_power_intent commands now look for IEEE 1801 and HDL 
+   files in the directories specified by the search_path variable.
+   
+   IEEE 1801 is also known as Unified Power Format (UPF).
+   
+   Usage of the search_searchpath routine for this purpose has been removed.
+
+
+E-2010.12
+=========
+
+This release of the MVRC Static Verification Reference Methodology provides the 
+capabilities to run MVRC on netlist output or RTL in a top-down or block-level 
+synthesis flow and to run MVRC on a full chip design in a bottom-up hierarchical 
+synthesis flow.
