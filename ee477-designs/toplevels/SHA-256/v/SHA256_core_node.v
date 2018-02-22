@@ -67,9 +67,7 @@ module SHA256_core
 	reg     		cycle_counter_r;
 	reg	[31:0]		Kt_r;
 	reg	[31:0]		Wt_r;
-	reg	[255:0]		msg_r;
-
-
+	reg	[255:0]		msg_r;	
 
 
 	SHA256_pre_processing 
