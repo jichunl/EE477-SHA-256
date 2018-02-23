@@ -15,9 +15,9 @@
 // 	v_o:		Indicate that the module has produced a valid output
 // 	digest_o: 	The result of hashing the message
 module SHA256_compression
-	(//input	wire		clk_i
+	//input	wire		clk_i
 	//,input  wire 		reset_i
-	,input  	[255:0] message_i
+	(input  	[255:0] message_i
 	//,input       		v_i 		
 	//,input 	    		yumi_i
 	,input 		[31:0]	Kt_i
@@ -52,12 +52,12 @@ module SHA256_compression
 	sigma_0 sigma0(.A_i(A), .sigma_0_o(sigma_0_o));
 	sigma_1 sigma1(.E_i(E), .sigma_1_o(sigma_1_o));
 	
-	sum_wt_kt = Wt_i + Kt_i;
-	sum_wt_kt_ch_H = sum_wt_kt + H + ch_o;
-	sum_wt_kt_ch_H_s1 = sum_wt_kt_ch_H + sigma_1_o;
-	sum_wt_kt_ch_H_s1_D = sum_wt_kt_ch_H_s1 + D;
-	sum_wt_kt_ch_H_s1_maj = sum_wt_kt_ch_H_s1 + maj_o;
-	sum_wt_kt_ch_H_s1_maj_s0 = sum_wt_kt_ch_H_s1_maj + sigma_0_o;
+	assign sum_wt_kt = Wt_i + Kt_i;
+	assign sum_wt_kt_ch_H = sum_wt_kt + H + ch_o;
+	assign sum_wt_kt_ch_H_s1 = sum_wt_kt_ch_H + sigma_1_o;
+	assign sum_wt_kt_ch_H_s1_D = sum_wt_kt_ch_H_s1 + D;
+	assign sum_wt_kt_ch_H_s1_maj = sum_wt_kt_ch_H_s1 + maj_o;
+	assign sum_wt_kt_ch_H_s1_maj_s0 = sum_wt_kt_ch_H_s1_maj + sigma_0_o;
 
 	assign digest_o = {sum_wt_kt_ch_H_s1_maj_s0, A, B, C, sum_wt_kt_ch_H_s1_D
 			  , E, F, G};
@@ -83,7 +83,7 @@ module ch
 	,output reg [31:0] ch_o
 	);
 	
-	assign ch_o = (E & F) ^ (~E & G);
+	assign ch_o = (E_i & F_i) ^ (~E_i & G_i);
 endmodule
 
 // The majority function tha looks at A,B,C. If the majority of bits at one
@@ -102,9 +102,9 @@ module maj
 	,input 	reg [31:0] C_i
 	
 	,output reg [31:0] maj_o
-	)
+	);
 	
-	assign maj_o = (A & B) ^ (A & C) ^ (B ^ C);
+	assign maj_o = (A_i & B_i) ^ (A_i & C_i) ^ (B_i ^ C_i);
 endmodule
 
 // The sigma 0 function rotates bits of A theb sums them together and modulo
@@ -118,7 +118,7 @@ module sigma_0
 	(input 	reg [31:0] A_i
 	
 	,output reg [31:0] sigma_0_o
-	)
+	);
 	
 	reg [31:0] A_2, A_13, A_22;
 	assign A_2 	= {A_i[1:0],  A_i[31:2]};

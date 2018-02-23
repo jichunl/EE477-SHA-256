@@ -37,11 +37,7 @@ module bsg_chip
 
     bsg_guts #(.num_channels_p  ( 1 )
               ,.channel_width_p ( 8 )
-<<<<<<< HEAD
               ,.nodes_p         ( 1 )
-=======
-              ,.nodes_p         ( 3 )
->>>>>>> 8ca6933b8ae8cc53bdb479c41e32bc0ff057011e
               )
       guts
         (.core_clk_i               ( misc_L_4_i_int        )
