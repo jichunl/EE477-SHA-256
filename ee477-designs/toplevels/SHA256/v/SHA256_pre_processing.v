@@ -15,58 +15,6 @@ module SHA256_pre_processing
 	,output		v_o
 	,output logic 	[511:0] pre_proc_o
 	);
-	
-	/*
-	reg [511:0] pre_proc_init, pre_proc_r, pre_proc_r_r;
-	/*
-	integer init_index = 255;
-	genvar i;
-	generate
-	for (i = 255; i >= 0; i--) begin
-		if (msg_i[i] != 1'b0) begin
-			assign init_index = i;
-		end
-	end
-	endgenerate
-	
-	genvar j;
-	generate
-	for (j = init_index; j >= 0; j--) begin
-		assign pre_proc_r[511 - (init_index - j)] = msg_i[j];
-	end
-	endgenerate
-	assign pre_proc_r [510 - init_index] = 1'b1;
-	assign pre_proc_o = pre_proc_r;*/
-	/*
-	assign pre_proc_init[511:0] = {msg_i[255:0], 1'b1, 255'b0};
-	
-	
-	logic start;
-	assign start = (pre_proc_r != pre_proc_r_r);
-	
-	always_ff @(posedge clk_i) begin
-		if (start) begin
-			pre_proc_r <= pre_proc_init;
-		end else begin
-			pre_proc_r <= pre_proc_r_r << 1;
-			pre_proc_r_r <= pre_proc_r;
-		end	
-	end*/
-	/*
-	always @(posedge clk_i) begin
-		while (pre_proc_r[511] == 0) begin
-			pre_proc_r = pre_proc_r_r << 1;
-			pre_proc_r_r = pre_proc_r;
-		end
-	end*/
-	// assign pre_proc_o = pre_proc_r;
-	//
-	//
-	//
-	//
-	//
-	//
-	//
 	// control logic
 	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
 	state_e state_n, state_r;
@@ -80,13 +28,7 @@ module SHA256_pre_processing
 	
 	logic [511:0] pre_proc_r,  pre_proc_shift;
 	assign pre_proc_shift = pre_proc_r << 1;
-	/*
-	always_ff @(posedge clk_i) begin
-		if (state_n != eBusy) begin
-			pre_proc_r <= pre_proc_r_r;
-		end
-	end
-*/
+	
 	always_comb begin
 		unique case(state_r)
 			eWait: begin

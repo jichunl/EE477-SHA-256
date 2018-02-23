@@ -21,7 +21,7 @@ module SHA256_core
 	,input 				en_i
 	,input 				v_i
 	,input 				yumi_i
-	,input	[255:0]			msg_i
+	,input	[511:0]			msg_i
 
 	,output 			ready_o
 	,output 			v_o
@@ -29,33 +29,123 @@ module SHA256_core
 	);
 
 	// initial hashing values for SHA256
-	reg [31:0] h0, h1, h2, h3, h4, h5, h6, h7;
+	//reg [31:0] h0, h1, h2, h3, h4, h5, h6, h7;
+	//reg [31:0] a, b, c, d, e, f, g, h;
+	//reg [31:0] h0_n, h1_n, h3_n, h4_n, h5_n, h6_n, h7_n;
+	//reg [31:0] a_n, b_n, c_n, d_n, e_n, f_n, g_n, h_n;
 	
-	assign h0 = 32'h6a09e667;
-	assign h1 = 32'hbb67ae85;
-	assign h2 = 32'h3c6ef372;
-	assign h3 = 32'ha54ff53a;
-	assign h4 = 32'h510e527f;
-	assign h5 = 32'h9b05688c;
-	assign h6 = 32'h1f83d9ab;
-	assign h7 = 32'h5be0cd19;
+	parameter SHA256_H0 = 32'h6a09e667;
+	parameter SHA256_H1 = 32'hbb67ae85;
+	parameter SHA256_H2 = 32'h3c6ef372;
+	parameter SHA256_H3 = 32'ha54ff53a;
+	parameter SHA256_H4 = 32'h510e527f;
+	parameter SHA256_H5 = 32'h9b05688c;
+	parameter SHA256_H6 = 32'h1f83d9ab;
+	parameter SHA256_H7 = 32'h5be0cd19;
 	
-	
-	wire 	[511:0] 	pre_proc_msg;
-	reg 	[63:0][31:0] 	Wt_ary;	 
+	parameter msg_init = {SHA256_H7, SHA256_H6, SHA256_H5, SHA256_H4
+			     ,SHA256_H3, SHA256_H2, SHA256_H1, SHA256_H0
+			     };
+
+
 	reg 	[255:0]    	digest_r;
-	reg     [5:0]		cycle_counter_r;
 	reg	[31:0]		Kt_r;
 	reg	[31:0]		Wt_r;
-	reg	[255:0]		msg_r;	
-
-	reg			init_r, yumi_pre_proc, ready_pre_proc, v_pre_proc;
 	
-	SHA256_Kt
-		Kt	(.addr(cycle_counter_r)
+
+	// data flow
+	reg	[255:0]		msg_r, msg_n;
+	
+	// control logic
+	reg			v_r, v_n;
+	assign v_o = v_r;
+	reg	[5:0]	cycle_counter, cycle_counter_n;
+	assign cycle_counter_n = cycle_counter + 1'b1;
+	reg msg_sch_init;
+	assign msg_sch_init = (state_n == eBusy);
+
+
+	// state
+	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
+	state_e substate_next, substate_r;	
+	
+	
+
+	SHA256_Kt_mem
+		Kt_mem	(.addr(cycle_counter)
 			,.Kt_o(Kt_r)
 			);	
 	
+
+
+	SHA256_message_scheduler
+		msg_sch	(.M_i(msg_i)
+			,.clk_i(clk_i)
+			,.reset_i(reset_i)
+			,.v_i(msg_sch_init)
+			,.Wt_o(Wt_r)
+			);
+
+	SHA256_compression
+		comp	(.message_i({msg_r})
+			,.Kt_i(Kt_r)
+			,.Wt_i(Wt_r)
+			,.digest_o(digest_r)
+			);
+
+	always @(posedge clk_i) begin
+		if (reset_i) begin
+			state_r <= eWait;
+			cycle_counter <= 6'b0;
+			msg_r <= 256'b0;
+			v_r <= 1'b0;
+		end else begin
+			state_r <= state_n;
+			cycle_counter <= cycle_counter_n;
+			msg_r <= msg_n;
+			v_r <= v_n;
+		end
+	end
+	
+	always_comb begin
+		case(state_r)
+			eWait: begin
+				if (raedy_o & v_i) begin
+					state_n = eBusy;
+					msg_n = msg_init;
+					v_n = 1'b0;
+				end
+			end
+			
+			eBusy: begin
+				if (cycle_counter == 64) begin
+					state_n = eDone;
+					digest_o = digest_r;
+					v_n = 1'b1;
+				end else begin
+					state_n = eBusy;
+					v_n = 1'b0;
+					msg_n = digest_r;
+				end
+			end
+
+			eDone: begin
+				if (yumi_i) begin
+					state_n = eWait;
+					cycle_counter_n = 6'b0;
+				end
+			end
+			
+			default: begin
+				state_n = eWait;
+			end
+		endcase
+	end
+
+
+
+endmodule
+		/*
 	SHA256_pre_processing 
 		pre_proc (.msg_i(msg_i)
 			 ,.clk_i(clk_i)
@@ -66,22 +156,9 @@ module SHA256_core
 			 ,.v_o(v_pre_proc)
 			 ,.pre_proc_o(pre_proc_msg)
 			 );
+	*/	
 
-	SHA256_message_scheduler
-		msg_sch	(.M_i(pre_proc_msg)
-			,.clk_i(clk_i)
-			,.reset_i(reset_i)
-			,.init_i(init_r)
-			,.Wt_o(Wt_ary)
-			);
-
-	SHA256_compression
-		comp	(.message_i({msg_r})
-			,.Kt_i(Kt_r)
-			,.Wt_i(Wt_r)
-			,.digest_o(digest_r)
-			);
-	
+	/*
 	// define cases
 	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
 	
@@ -95,7 +172,7 @@ module SHA256_core
 	assign ready_o = (substate_r == eWait);
 	
 
-	
+	/*
 	always_comb
 		unique case(substate_r)
 			eWait: begin // Waiting for the input
@@ -133,5 +210,5 @@ module SHA256_core
 			end
 		endcase
 endmodule
-
+*/
 

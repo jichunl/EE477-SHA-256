@@ -1,9 +1,19 @@
-// This is the module for 
+// This is the message scheduler module that provide Wt value for compression
+// fucntion
+//
+// input:
+// 	M_i:		input message
+// 	clk_i: 		the clock that this module runs on
+// 	reset_i: 	the reset signal for this module
+// 	v_i: 	start to counter cycles
+//
+// output:
+// 	Wt_o:		the output Wt value
 module SHA256_message_scheduler
 	(input 	[511:0] M_i 
 	,input 		clk_i
 	,input		reset_i	
-        ,input 		init_i	
+        ,input 		v_i	
 	,output [31:0] 	Wt_o 
 	);
 
@@ -93,7 +103,7 @@ module SHA256_message_scheduler
 
 		w_new = w_0 + s0 + w_9 + s1;
 
-		if (init_i) begin
+		if (v_i) begin
 			write_en = 1'b1;
 			word_next[15] = M_i[31:0];
 			word_next[14] = M_i[63:32];
@@ -147,7 +157,7 @@ module SHA256_message_scheduler
 	always @(*) begin	
 		case(state_r)
 			1'b0:begin // wait
-				if (init_i) begin
+				if (v_i) begin
 					cycle_counter = 6'b0;
 					state_n = 1'b1;
 				end
@@ -167,75 +177,3 @@ module SHA256_message_scheduler
 		endcase
 	end
 endmodule
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-/*
-// This is a module solving 2D array assign issue
-module ary_assign 
-	(input [31:0]	 word_16_i
-	,input [31:0]	 word_7_i
-	,input [31:0]	 s0_i
-	,input [31:0]    s1_i
-	,output[31:0]    w_o
-	);
-	assign w_o = word_16_i + s0_i + word_7_i + s1_i;
-endmodule
-
-
-// This is the sigma_0 function for the message scheduler
-// 
-// input:
-// 	word_i:		The word that is going to be rotated
-//	
-// output:
-// 	msg_sch_sigma_0:The output of sigma_0 function
-module msg_sch_sigma_0
-	(input 	[31:0] word_i
-	
-	,output [31:0] s0_o
-	);
-	
-	reg [31:0] word_7, word_18, word_3;
-
-	assign word_7 	= {word_i[6:0],  word_i[31:7]};
-	assign word_18 	= {word_i[17:0], word_i[31:18]};
-	assign word_3	= word_i >> 3;
-	
-	assign msg_sch_sigma_0_o = (word_7 ^ word_18) ^ word_3;
-endmodule
-
-// This is the sigma_1 function for the message scheduler
-// 
-// input:
-//	word_i: 	The word that is going to be rotated
-// 	
-// output:
-// 	msg_sch_sigma_1:The output of sigma_1 function
-module msg_sch_sigma_1
-	(input 	[31:0]	word_i
-	
-	,output [31:0]	s1_o
-	);
-	
-	reg 	[31:0] 	word_17, word_19, word_10; 
-	
-	assign word_17 	= {word_i[16:0], word_i[31:17]};
-	assign word_19 	= {word_i[18_0], word_i[31:19]};
-	assign word_10	= word_i >> 10;
-
-	assign s1_o = (word_17 ^ word_19) ^ word_10;
-endmodule
-*/
