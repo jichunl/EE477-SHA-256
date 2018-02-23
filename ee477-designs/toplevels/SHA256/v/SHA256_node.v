@@ -35,7 +35,7 @@ module SHA256_node #(parameter ring_width_p = "inv"
 			,.v_i(msg_v)
 			,.yumi_i(yumi_i)
 			,.msg_i(msg)
-			,.ready_(core_ready)
+			,.ready_o(core_ready)
 			,.v_o(v_o)
 			,.digest_o(data_o)
 			);

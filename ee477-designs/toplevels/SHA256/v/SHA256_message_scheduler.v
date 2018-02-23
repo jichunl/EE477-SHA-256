@@ -54,8 +54,8 @@ module SHA256_message_scheduler
 		//w[j][31:0] = w[j - 16][31:0] + s0+ w[j - 7][31:0] + s1;
 		ary_assign assign_word	(.word_16_i(w[j - 16][31:0]) 
 				       	,.word_7_i(w[j - 7][31:0])
-					,.s0(s0)
-					,.s1(s1)
+					,.s0_i(s0)
+					,.s1_i(s1)
 					,.w_o(w[j][31:0])
 					);
 	end

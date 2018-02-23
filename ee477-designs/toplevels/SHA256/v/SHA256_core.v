@@ -82,8 +82,8 @@ module SHA256_core
 
 	SHA256_compression
 		comp	(.message_i({msg_r})
-			,.Kt(Kt_r)
-			,.Wt(Wt_r)
+			,.Kt_i(Kt_r)
+			,.Wt_i(Wt_r)
 			,.digest_o(digest_r)
 			);
 	

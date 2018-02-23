@@ -31,13 +31,13 @@ module SHA256_compression
 // Assign the input message bits to words A-H
 	reg [31:0] A,B,C,D,E,F,G,H;
 	assign A = message_i[31:0];
-	assign B = message_i[32:63];
-	assign C = message_i[64:95];
-	assign D = message_i[96:127];
-	assign E = message_i[128:159];
-	assign F = message_i[160:191];
-	assign G = message_i[192:223];
-	assign H = message_i[224:255];
+	assign B = message_i[63:32];
+	assign C = message_i[95:64];
+	assign D = message_i[127:96];
+	assign E = message_i[159:128];
+	assign F = message_i[191:160];
+	assign G = message_i[223:192];
+	assign H = message_i[255:224];
 
 // Temp registers for addition
 	reg [31:0] sum_wt_kt, sum_wt_kt_ch_H, sum_wt_kt_ch_H_s1, sum_wt_kt_ch_H_s1_D,
