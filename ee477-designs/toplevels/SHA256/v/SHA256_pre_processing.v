@@ -5,22 +5,33 @@
 // output
 //
 
-module SHA256_pre_processing (parameter ring_width_p = "inv") 
+module SHA256_pre_processing #(parameter ring_width_p = "inv") 
 	(input 	[ring_width_p:0] msg_i
 	
 	,output [511:0] pre_proc_o
-	)
+	);
+	
+	reg [511:0] pre_proc_r;
+	
+	assign pre_proc_r = 512'b0;
 
-	localparam init_index;
-	generate genvar i;
+	integer init_index = 255;
+	genvar i;
+	generate
 	for (i = 255; i >= 0; i++) begin
 		if (msg_i[i] != 0) begin
-			init_index = i;
+			assign init_index = i;
 		end
 	end
 	endgenerate
-	localparam k;
-	assign k = 512 - init_index - 1 - 1;
-	assign pre_proc_o = {msg_i[init_index:0], 1'b1, k'b0};
+	
+	genvar j;
+	generate
+	for (j = init_index; j >= 0; j--) begin
+		assign pre_proc_r[511 - (init_index - j)] = msg_i[j];
+	end
+	endgenerate
+	assign pre_proc_r [510 - init_index] = 1'b1;
+	assign pre_proc_o = pre_proc_r;
 endmodule
 	
