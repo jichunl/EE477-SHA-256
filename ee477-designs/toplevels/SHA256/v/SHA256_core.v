@@ -30,7 +30,7 @@ module SHA256_core
 	
 	
 	// This is pre-defined K values for SHA256
-	localparam [63:0] K = {
+	localparam [63:0] Kt = {
 		32'h428a2f98, 32'h71374491, 32'hb5c0fbcf, 32'he9b5dba5,
 		32'h3956c25b, 32'h59f111f1, 32'h923f82a4, 32'hab1c5ed5,
 		32'hd807aa98, 32'h12835b01, 32'h243185be, 32'h550c7dc3,
@@ -90,6 +90,8 @@ module SHA256_core
 	// define cases
 	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
 	
+	state_e substate_next, substate_r;
+
 	// State register
 	always_ff @(posedge clk_i)
 		substate_r <= reset_i ? eWait : substate_next;
@@ -106,7 +108,7 @@ module SHA256_core
 					substate_next = eBusy;
 					msg_r = {h7, h6, h5, h4, h3, h2, h1, h0};
 					cycle_counter_r = 0;
-					Kt_r = K[0];
+					Kt_r = Kt[0];
 					Wt_r = Wt_ary[0][31:0];
 				end else begin
 					substate_next = eWait;
@@ -114,7 +116,7 @@ module SHA256_core
 		 	end
 		
 			eBusy: begin // Calculating the hash value
-				if (cycle_coutner_r < 64) begin
+				if (cycle_counter_r < 64) begin
 					substate_next = eBusy;
 					msg_r = digest_r;
 					Kt_r = Kt[cycle_counter_r];
