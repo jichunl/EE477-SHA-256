@@ -158,6 +158,7 @@ set bsg_sverilog_source_files [join "
   $bsg_designs_target_dir/v/SHA256_message_scheduler.v
   $bsg_designs_target_dir/v/SHA256_node.v
   $bsg_designs_target_dir/v/SHA256_pre_processing.v
+  $bsg_designs_target_dir/v/SHA256_Kt.v
   $bsg_designs_dir/modules/bsg_manycore_1x1/bsg_manycore_1x1_pkg.v
   $bsg_designs_dir/modules/bsg_manycore_1x1/bsg_manycore_client_node.v
 

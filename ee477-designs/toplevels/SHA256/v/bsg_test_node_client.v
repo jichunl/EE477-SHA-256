@@ -27,7 +27,7 @@ module  bsg_test_node_client #(parameter ring_width_p="inv"
   /** INSTANTIATE NODE 0 **/ 
   if ( client_id_p == 0 ) begin
 
-    incrementer_node #( .ring_width_p( ring_width_p - 5 )
+    SHA256_node #( .ring_width_p( ring_width_p - 5 )
                       , .id_p        ( client_id_p ))
       node
         (.clk_i   ( clk_i   )
@@ -43,6 +43,7 @@ module  bsg_test_node_client #(parameter ring_width_p="inv"
   end
 
   /** INSTANTIATE NODE 1 **/
+  /*
   else if ( client_id_p == 1 ) begin
 		gcd_accelerator #(.ring_width_p( ring_width_p - 5 )
                       , .id_p        ( client_id_p ))
@@ -76,5 +77,6 @@ module  bsg_test_node_client #(parameter ring_width_p="inv"
          ,.data_o  ( data_llo)
          ,.yumi_i  ( yumi_i  ));	
 	end
+*/
 endmodule
 

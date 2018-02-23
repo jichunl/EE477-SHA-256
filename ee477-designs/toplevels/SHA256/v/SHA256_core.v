@@ -27,26 +27,6 @@ module SHA256_core
 	,output 			v_o
 	,output [255:0]			digest_o
 	);
-	
-	
-	// This is pre-defined K values for SHA256
-	localparam [63:0] Kt = {
-		32'h428a2f98, 32'h71374491, 32'hb5c0fbcf, 32'he9b5dba5,
-		32'h3956c25b, 32'h59f111f1, 32'h923f82a4, 32'hab1c5ed5,
-		32'hd807aa98, 32'h12835b01, 32'h243185be, 32'h550c7dc3,
-		32'h72be5d74, 32'h80deb1fe, 32'h9bdc06a7, 32'hc19bf174,
-		32'he49b69c1, 32'hefbe4786, 32'h0fc19dc6, 32'h240ca1cc,
-		32'h2de92c6f, 32'h4a7484aa, 32'h5cb0a9dc, 32'h76f988da,
-		32'h983e5152, 32'ha831c66d, 32'hb00327c8, 32'hbf597fc7,
-		32'hc6e00bf3, 32'hd5a79147, 32'h06ca6351, 32'h14292967,
-		32'h27b70a85, 32'h2e1b2138, 32'h4d2c6dfc, 32'h53380d13,
-		32'h650a7354, 32'h766a0abb, 32'h81c2c92e, 32'h92722c85,
-		32'ha2bfe8a1, 32'ha81a664b, 32'hc24b8b70, 32'hc76c51a3,
-		32'hd192e819, 32'hd6990624, 32'hf40e3585, 32'h106aa070,
-		32'h19a4c116, 32'h1e376c08, 32'h2748774c, 32'h34b0bcb5,
-		32'h391c0cb3, 32'h4ed8aa4a, 32'h5b9cca4f, 32'h682e6ff3,
-		32'h748f82ee, 32'h78a5636f, 32'h84c87814, 32'h8cc70208,
-		32'h90befffa, 32'ha4506ceb, 32'hbef9a3f7, 32'hc67178f2};
 
 	// initial hashing values for SHA256
 	reg [31:0] h0, h1, h2, h3, h4, h5, h6, h7;
@@ -64,19 +44,34 @@ module SHA256_core
 	wire 	[511:0] 	pre_proc_msg;
 	reg 	[63:0][31:0] 	Wt_ary;	 
 	reg 	[255:0]    	digest_r;
-	reg     		cycle_counter_r;
+	reg     [5:0]		cycle_counter_r;
 	reg	[31:0]		Kt_r;
 	reg	[31:0]		Wt_r;
 	reg	[255:0]		msg_r;	
 
-
+	reg			init_r, yumi_pre_proc, ready_pre_proc, v_pre_proc;
+	
+	SHA256_Kt
+		Kt	(.addr(cycle_counter_r)
+			,.Kt_o(Kt_r)
+			);	
+	
 	SHA256_pre_processing 
 		pre_proc (.msg_i(msg_i)
+			 ,.clk_i(clk_i)
+			 ,.reset_i(reset_i)
+			 ,.v_i(v_i)
+			 ,.yumi_i(yumi_pre_proc)
+			 ,.ready_o(ready_pre_proc)
+			 ,.v_o(v_pre_proc)
 			 ,.pre_proc_o(pre_proc_msg)
 			 );
 
 	SHA256_message_scheduler
 		msg_sch	(.M_i(pre_proc_msg)
+			,.clk_i(clk_i)
+			,.reset_i(reset_i)
+			,.init_i(init_r)
 			,.Wt_o(Wt_ary)
 			);
 
@@ -90,8 +85,8 @@ module SHA256_core
 	// define cases
 	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
 	
-	state_e substate_next, substate_r;
-
+	state_e substate_next, substate_r;	
+	
 	// State register
 	always_ff @(posedge clk_i)
 		substate_r <= reset_i ? eWait : substate_next;
@@ -108,7 +103,6 @@ module SHA256_core
 					substate_next = eBusy;
 					msg_r = {h7, h6, h5, h4, h3, h2, h1, h0};
 					cycle_counter_r = 0;
-					Kt_r = Kt[0];
 					Wt_r = Wt_ary[0][31:0];
 				end else begin
 					substate_next = eWait;
@@ -119,7 +113,6 @@ module SHA256_core
 				if (cycle_counter_r < 64) begin
 					substate_next = eBusy;
 					msg_r = digest_r;
-					Kt_r = Kt[cycle_counter_r];
 					Wt_r = Wt_ary[cycle_counter_r];
 				end else begin
 					substate_next = eDone;

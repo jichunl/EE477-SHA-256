@@ -1,68 +1,188 @@
-// This is the message scheduler module for SHA-256 accelerator which produces the Wt value for SHA-256 digest
-//
-// input:
-//	M_i:	input message
-// 	clk_i:	The clock that this module runs on
-// 
-// output:
-// 	Wt_o: 	The output of the message scheduler
+// This is the module for 
 module SHA256_message_scheduler
 	(input 	[511:0] M_i 
-//	,input 		clk_i
-	
-	,output [63:0][31:0] 	Wt_o 
+	,input 		clk_i
+	,input		reset_i	
+        ,input 		init_i	
+	,output [31:0] 	Wt_o 
 	);
-        
-// Create word array
-	reg [63:0][31:0] w;
-        // copy the chunk into first 16 words to word array
-	/*
-	generate genvar i,j;
-	for (i = 0; i < 16; i++) begin
-		for (j = 0; j < 32; j++) begin
-			w[i][j] = M_i[32 * i + j];
+
+	// data flow
+	reg 	[31:0] 	word_mem [15:0];
+	reg	[31:0]	word_next[15:0];
+	reg	[31:0]	wt;
+	// control logic
+	reg			write_en;
+	reg	[5:0]		cycle_counter, cycle_counter_next;
+	reg			state_r, state_n; // busy = 1'b1, wait = 1'b0
+	reg [31:0] w_0, w_1, w_9, w_14, s0, s1, w_new;
+
+		
+
+	assign Wt_o = wt;
+
+	always @(posedge clk_i)	begin
+
+		if (reset_i) begin
+			state_n		<= 1'b0;
+			cycle_counter   <= 6'b0;
+			word_mem[0] 	<= 32'b0;
+			word_mem[1] 	<= 32'b0;
+			word_mem[2] 	<= 32'b0;
+			word_mem[3] 	<= 32'b0;
+			word_mem[4] 	<= 32'b0;
+			word_mem[5] 	<= 32'b0;
+			word_mem[6] 	<= 32'b0;
+			word_mem[7] 	<= 32'b0;
+			word_mem[8] 	<= 32'b0;
+			word_mem[9] 	<= 32'b0;
+			word_mem[10] 	<= 32'b0;
+			word_mem[11] 	<= 32'b0;
+			word_mem[12]	<= 32'b0;
+			word_mem[13]	<= 32'b0;
+			word_mem[14] 	<= 32'b0;
+			word_mem[15] 	<= 32'b0;
+		end else begin
+			if (write_en) begin
+				word_mem[0]	<= word_next[0];
+				word_mem[1] 	<= word_next[1];
+				word_mem[2]	<= word_next[2];
+				word_mem[3] 	<= word_next[3];
+				word_mem[4] 	<= word_next[4];
+				word_mem[5] 	<= word_next[5];
+				word_mem[6] 	<= word_next[6];
+				word_mem[7]	<= word_next[7];
+				word_mem[8] 	<= word_next[8];
+				word_mem[9] 	<= word_next[9];
+				word_mem[10] 	<= word_next[10];
+				word_mem[11] 	<= word_next[11];
+				word_mem[12] 	<= word_next[12];
+				word_mem[13] 	<= word_next[13];
+				word_mem[14] 	<= word_next[14];
+				word_mem[15] 	<= word_next[15];
+			end
 		end
 	end
-	endgenerate
-	*/ // code doesn't work, do it by hand
+	
+	always @(*) begin
+		
+		word_next[0] 	<= 32'b0;
+		word_next[1] 	<= 32'b0;
+		word_next[2] 	<= 32'b0;
+		word_next[3] 	<= 32'b0;
+		word_next[4] 	<= 32'b0;
+		word_next[5] 	<= 32'b0;
+		word_next[6]	<= 32'b0;
+		word_next[7] 	<= 32'b0;
+		word_next[8] 	<= 32'b0;
+		word_next[9] 	<= 32'b0;
+		word_next[10] 	<= 32'b0;
+		word_next[11] 	<= 32'b0;
+		word_next[12]	<= 32'b0;
+		word_next[13]	<= 32'b0;
+		word_next[14] 	<= 32'b0;
+		word_next[15] 	<= 32'b0;	
+		
+		w_0 = word_mem[0];
+		w_1 = word_mem[1];
+		w_9 = word_mem[9];
+		w_14 = word_mem[14];
+		
+		s0 = {w_1[6:0], w_1[31:7]} 	^ {w_1[17:0], w_1[31:18]} 	^ (w_1 >> 3);
+		s1 = {w_14[16:0], w_14[31:17]} 	^ {w_14[18:0], w_14[31:19]}	^ (w_14 >> 10);
 
-	assign w[0][31:0] = M_i[31:0];
-	assign w[1][31:0] = M_i[63:32];
-	assign w[2][31:0] = M_i[95:64];
-	assign w[3][31:0] = M_i[127:96];
-	assign w[4][31:0] = M_i[159:128];
-	assign w[5][31:0] = M_i[191:160];
-	assign w[6][31:0] = M_i[223:192];
-	assign w[7][31:0] = M_i[255:224];
-	assign w[8][31:0] = M_i[287:256];
-	assign w[9][31:0] = M_i[319:288];
-	assign w[10][31:0] = M_i[351:320];
-	assign w[11][31:0] = M_i[383:352];
-	assign w[12][31:0] = M_i[415:384];
-	assign w[13][31:0] = M_i[447:416];
-	assign w[14][31:0] = M_i[479:448];
-	assign w[15][31:0] = M_i[511:480];
-	
-	reg [31:0] s0, s1;
-	
-	genvar j;
-	generate 
-	// compute values for rest of w
-	for (j = 16; j < 64; j++) begin
-		msg_sch_sigma_0 sigma0(.word_i(w[j - 15][31:0]), .s0_o(s0));
-		msg_sch_sigma_1 sigma1(.word_i(w[j - 2][31:0]),  .s1_o(s1)); 
-		//w[j][31:0] = w[j - 16][31:0] + s0+ w[j - 7][31:0] + s1;
-		ary_assign assign_word	(.word_16_i(w[j - 16][31:0]) 
-				       	,.word_7_i(w[j - 7][31:0])
-					,.s0_i(s0)
-					,.s1_i(s1)
-					,.w_o(w[j][31:0])
-					);
+		w_new = w_0 + s0 + w_9 + s1;
+
+		if (init_i) begin
+			write_en = 1'b1;
+			word_next[15] = M_i[31:0];
+			word_next[14] = M_i[63:32];
+	 		word_next[13] = M_i[95:64];
+	 		word_next[12] = M_i[127:96];
+	 		word_next[11] = M_i[159:128];
+	 		word_next[10] = M_i[191:160];
+	 		word_next[9]  = M_i[223:192];
+			word_next[8]  = M_i[255:224];
+		 	word_next[7]  = M_i[287:256];
+			word_next[6]  = M_i[319:288];
+			word_next[5]  = M_i[351:320];
+			word_next[4]  = M_i[383:352];
+			word_next[3]  = M_i[415:384];
+			word_next[2]  = M_i[447:416];
+			word_next[1]  = M_i[479:448];
+			word_next[0]  = M_i[511:480];
+		end else begin
+			if (cycle_counter > 15) begin
+				write_en = 1'b1;
+				word_next[15] = w_new;
+				word_next[14] = word_mem[15];
+	 			word_next[13] = word_mem[14];
+	 			word_next[12] = word_mem[13];
+	 			word_next[11] = word_mem[12];
+	 			word_next[10] = word_mem[11];
+	 			word_next[9]  = word_mem[10];
+				word_next[8]  = word_mem[9];
+		 		word_next[7]  = word_mem[8];
+				word_next[6]  = word_mem[7];
+				word_next[5]  = word_mem[6];
+				word_next[4]  = word_mem[5];
+				word_next[3]  = word_mem[4];
+				word_next[2]  = word_mem[3];
+				word_next[1]  = word_mem[2];
+				word_next[0]  = word_mem[1];
+			end
+		end
 	end
-	endgenerate
-	assign Wt_o = w; 
-endmodule 
 
+	always_comb begin	
+		if (cycle_counter < 16) begin
+			wt <= word_mem[cycle_counter[3:0]];
+		end else begin
+			wt <= w_new;
+		end
+	end	
+
+	assign cycle_counter_next = cycle_counter + 1'b1;
+
+	always @(*) begin	
+		case(state_r)
+			1'b0:begin // wait
+				if (init_i) begin
+					cycle_counter = 6'b0;
+					state_n = 1'b1;
+				end
+			end
+
+			1'b1:begin // busy
+				if (cycle_counter == 6'b111111) begin
+					state_n = 1'b0;
+				end
+				cycle_counter <= cycle_counter_next;
+
+			end
+
+			default: begin
+				state_n = 1'b0;
+			end
+		endcase
+	end
+endmodule
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+/*
 // This is a module solving 2D array assign issue
 module ary_assign 
 	(input [31:0]	 word_16_i
@@ -73,6 +193,7 @@ module ary_assign
 	);
 	assign w_o = word_16_i + s0_i + word_7_i + s1_i;
 endmodule
+
 
 // This is the sigma_0 function for the message scheduler
 // 
@@ -117,3 +238,4 @@ module msg_sch_sigma_1
 
 	assign s1_o = (word_17 ^ word_19) ^ word_10;
 endmodule
+*/

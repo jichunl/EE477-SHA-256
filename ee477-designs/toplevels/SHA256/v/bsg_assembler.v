@@ -12,8 +12,11 @@ module bsg_assembler #(parameter ring_width_p="inv"           ,parameter id_p="i
   ,input  [ring_width_p -1 :0] data_i
   ,output            logic        ready_o
 
-  ,output          logic          v_o
-  ,output [255:0] data_o
+  ,output logic          	v_o
+  ,output reg	[255:0] 	data_o
+
+
+ 
 
   ,input                     yumi_i
   );
@@ -55,7 +58,7 @@ wire [63:0] in4_out;
 
 
 assign join_i = data_i;  //first pass
-assign data_o = {in4_out,in3_out,in2_out,in1_out};			//input to sha module change from data_o
+//assign data_o = {in4_out,in3_out,in2_out,in1_out};			//input to sha module change from data_o
 
 
 
@@ -168,7 +171,11 @@ DONE:
         en2_i = 1'b0;
         en3_i = 1'b0;
         en4_i = 1'b0;
+
 	assign data_o = {in4_out,in3_out,in2_out,in1_out};
+
+//	assign data_o = {in4_out,in3_out,in2_out,in1_out};
+
 	end
 endcase
 end
