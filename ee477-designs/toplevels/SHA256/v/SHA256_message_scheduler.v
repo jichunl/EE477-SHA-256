@@ -16,9 +16,10 @@ module SHA256_message_scheduler
 // Create word array
 	reg [63:0][31:0] w;
         // copy the chunk into first 16 words to word array
-	generate genvar i;
+	generate genvar i,j;
 	for (i = 0; i < 16; i++) begin
-		w[i] = M_i[16 * i + 15 : i * 16];
+		w[i][31:0] = M_i[32 * i + 31: i * 32];
+	end
 	endgenerate
 	
 	reg [31:0] s0, s1;
