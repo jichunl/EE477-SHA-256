@@ -104,7 +104,7 @@ module maj
 	,output reg [31:0] maj_o
 	);
 	
-	assign maj_o = (A_i & B_i) ^ (A_i & C_i) ^ (B_i ^ C_i);
+	assign maj_o = (A_i & B_i) ^ (A_i & C_i) ^ (B_i & C_i);
 endmodule
 
 // The sigma 0 function rotates bits of A theb sums them together and modulo
