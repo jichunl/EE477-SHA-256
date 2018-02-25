@@ -88,8 +88,10 @@ CALC:
 	end
 DONE:	
 	begin
-	ready_o = 1'b0;			//think
+	ready_o = 1'b0;			
 	v_o = 1'b0;
+	assembler_en_i = 1'b0;		
+	core_en_i = 1'b0;
 	end
 endcase
 end
