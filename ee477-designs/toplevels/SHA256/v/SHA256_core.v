@@ -15,7 +15,7 @@
 // 	v_o:		indicates that this module has produced valid outputfe
 // 	digest_o:	the result of hashing
 
-module SHA256_core 
+module SHA256_core #(parameter core_id = "inv")
 	(input 				clk_i
 	,input 				reset_i
 	,input 				en_i
@@ -25,15 +25,9 @@ module SHA256_core
 
 	,output 			ready_o
 	,output 			v_o
-	,output [255:0]			digest_o
+	,output reg	[255:0]		digest_o
 	);
 
-	// initial hashing values for SHA256
-	//reg [31:0] h0, h1, h2, h3, h4, h5, h6, h7;
-	//reg [31:0] a, b, c, d, e, f, g, h;
-	//reg [31:0] h0_n, h1_n, h3_n, h4_n, h5_n, h6_n, h7_n;
-	//reg [31:0] a_n, b_n, c_n, d_n, e_n, f_n, g_n, h_n;
-	
 	parameter SHA256_H0 = 32'h6a09e667;
 	parameter SHA256_H1 = 32'hbb67ae85;
 	parameter SHA256_H2 = 32'h3c6ef372;
@@ -52,7 +46,10 @@ module SHA256_core
 	reg	[31:0]		Kt_r;
 	reg	[31:0]		Wt_r;
 	
-
+	// state
+	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
+	state_e state_n, state_r;	
+	
 	// data flow
 	reg	[255:0]		msg_r, msg_n;
 	
@@ -65,9 +62,7 @@ module SHA256_core
 	assign msg_sch_init = (state_n == eBusy);
 
 
-	// state
-	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
-	state_e substate_next, substate_r;	
+	
 	
 	
 
@@ -110,7 +105,7 @@ module SHA256_core
 	always_comb begin
 		case(state_r)
 			eWait: begin
-				if (raedy_o & v_i) begin
+				if (ready_o & v_i) begin
 					state_n = eBusy;
 					msg_n = msg_init;
 					v_n = 1'b0;
@@ -145,70 +140,3 @@ module SHA256_core
 
 
 endmodule
-		/*
-	SHA256_pre_processing 
-		pre_proc (.msg_i(msg_i)
-			 ,.clk_i(clk_i)
-			 ,.reset_i(reset_i)
-			 ,.v_i(v_i)
-			 ,.yumi_i(yumi_pre_proc)
-			 ,.ready_o(ready_pre_proc)
-			 ,.v_o(v_pre_proc)
-			 ,.pre_proc_o(pre_proc_msg)
-			 );
-	*/	
-
-	/*
-	// define cases
-	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
-	
-	state_e substate_next, substate_r;	
-	
-	// State register
-	always_ff @(posedge clk_i)
-		substate_r <= reset_i ? eWait : substate_next;
-
-	assign v_o = (substate_r == eDone);
-	assign ready_o = (substate_r == eWait);
-	
-
-	/*
-	always_comb
-		unique case(substate_r)
-			eWait: begin // Waiting for the input
-				if (v_i & ready_o) begin
-					substate_next = eBusy;
-					msg_r = {h7, h6, h5, h4, h3, h2, h1, h0};
-					cycle_counter_r = 0;
-					Wt_r = Wt_ary[0][31:0];
-				end else begin
-					substate_next = eWait;
-				end
-		 	end
-		
-			eBusy: begin // Calculating the hash value
-				if (cycle_counter_r < 64) begin
-					substate_next = eBusy;
-					msg_r = digest_r;
-					Wt_r = Wt_ary[cycle_counter_r];
-				end else begin
-					substate_next = eDone;
-				end
-			end
-
-			eDone: begin // Done with the calculation
-				if (yumi_i) begin
-					substate_next = eWait;
-				end
-									
-			end
-
-			default: begin
-				if (reset_i) begin
-					substate_next = eWait;
-				end
-			end
-		endcase
-endmodule
-*/
-
