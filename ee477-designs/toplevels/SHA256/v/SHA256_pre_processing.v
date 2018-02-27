@@ -23,7 +23,7 @@ module SHA256_pre_processing
 	assign ready_o = ((v_o & yumi_i) | reset_i) & (state_r == eWait);
 
 	always_ff @(posedge clk_i) begin
-		state_r <= reset_i ? eWait : state_r;
+		state_r <= reset_i ? eWait : state_r;       //<------ eWait  : state_n;
 	end
 	
 	logic [511:0] pre_proc_r,  pre_proc_shift;
