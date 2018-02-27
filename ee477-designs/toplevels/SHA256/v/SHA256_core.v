@@ -1,6 +1,10 @@
 // This is the SHA256_core module which combines pre-processing, message
-// message scheduler and comp[ression together
+// message scheduler and compression together
 //
+// Comment on update:
+// 	create a dff for cycle_counter to deal with ICSD error
+//	add 2 new control signal ctr_reset (cycle_conter_reset) and ctr_en
+//	(cycle_counter_enable)
 // input:
 // 	clk_i:		the clock that this module runs on
 // 	reset_i:	the reset from fsb
@@ -14,7 +18,8 @@
 // 	ready_o: 	indicates that our output put
 // 	v_o:		indicates that this module has produced valid outputfe
 // 	digest_o:	the result of hashing
-
+//
+// Last modified on: Tue Feb 27 15:54:07 2018
 module SHA256_core #(parameter core_id = "inv")
 	(input 				clk_i
 	,input 				reset_i
@@ -56,8 +61,11 @@ module SHA256_core #(parameter core_id = "inv")
 	// control logic
 	reg			v_r, v_n;
 	assign v_o = v_r;
+
+	reg 		ctr_en, ctr_reset;
 	reg	[5:0]	cycle_counter, cycle_counter_n;
 	assign cycle_counter_n = cycle_counter + 1'b1;
+	
 	reg msg_sch_init;
 	assign msg_sch_init = (state_n == eBusy);
 
@@ -90,17 +98,20 @@ module SHA256_core #(parameter core_id = "inv")
 	always @(posedge clk_i) begin
 		if (reset_i) begin
 			state_r <= eWait;
-			cycle_counter <= 6'b0;
 			msg_r <= 256'b0;
 			v_r <= 1'b0;
 		end else begin
 			state_r <= state_n;
-			cycle_counter <= cycle_counter_n;
 			msg_r <= msg_n;
 			v_r <= v_n;
 		end
 	end
 	
+	always_ff @(posedge clk_i) begin
+		assign cycle_counter = (ctr_reset | reset_i) ? 6'b0:cycle_counter_n;
+	end
+
+
 	always_comb begin
 		case(state_r)
 			eWait: begin
@@ -108,10 +119,12 @@ module SHA256_core #(parameter core_id = "inv")
 					state_n = eBusy;
 					msg_n = msg_init;
 					v_n = 1'b0;
+					ctr_reset = 1'b1;
 				end
 			end
 			
 			eBusy: begin
+				ctr_en = 1'b1;
 				if (cycle_counter == 64) begin
 					state_n = eDone;
 					digest_o = digest_r;
@@ -126,7 +139,8 @@ module SHA256_core #(parameter core_id = "inv")
 			eDone: begin
 				if (yumi_i) begin
 					state_n = eWait;
-					cycle_counter = 6'b0;
+					ctr_en = 1'b0;
+					ctr_reset = 1'b1;
 				end
 			end
 			
