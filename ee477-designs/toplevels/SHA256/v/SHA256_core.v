@@ -8,7 +8,7 @@
 // 	v_i:		the signal that tells the input data is valid
 // 	yumi_i:		the signal that indicate the outside world is ready to
 // 			accept our output data
-//  	msg_i:		the input message for SHA256 core to hash
+//  	msg_i:		the input message from bsg_assembler
 //
 // output:
 // 	ready_o: 	indicates that our output put
@@ -21,7 +21,7 @@ module SHA256_core #(parameter core_id = "inv")
 	,input 				en_i
 	,input 				v_i
 	,input 				yumi_i
-	,input	[511:0]			msg_i
+	,input		[255:0]		msg_i
 
 	,output 			ready_o
 	,output 			v_o
@@ -52,7 +52,7 @@ module SHA256_core #(parameter core_id = "inv")
 	
 	// data flow
 	reg	[255:0]		msg_r, msg_n;
-	
+	reg	[511:0]		block;
 	// control logic
 	reg			v_r, v_n;
 	assign v_o = v_r;
@@ -62,19 +62,18 @@ module SHA256_core #(parameter core_id = "inv")
 	assign msg_sch_init = (state_n == eBusy);
 
 
-	
-	
-	
+	SHA256_pre_processing
+		pre_proc(.msg_i(msg_i)
+			,.pre_proc_o(block)
+			);
 
 	SHA256_Kt_mem
 		Kt_mem	(.addr(cycle_counter)
 			,.Kt_o(Kt_r)
-			);	
-	
-
+			);		
 
 	SHA256_message_scheduler
-		msg_sch	(.M_i(msg_i)
+		msg_sch	(.M_i(block)
 			,.clk_i(clk_i)
 			,.reset_i(reset_i)
 			,.v_i(msg_sch_init)
@@ -127,7 +126,7 @@ module SHA256_core #(parameter core_id = "inv")
 			eDone: begin
 				if (yumi_i) begin
 					state_n = eWait;
-					cycle_counter_n = 6'b0;
+					cycle_counter = 6'b0;
 				end
 			end
 			

@@ -48,7 +48,7 @@ module bsg_assembler #(parameter ring_width_p="inv"           ,parameter id_p="i
 //assign a_i = data_i [31:0];
 //assign b_i = data_i [63:32];
 
-//wire [63:0] join_i;
+wire [63:0] join_i;
 
 wire [63:0] in1_out;
 wire [63:0] in2_out;
