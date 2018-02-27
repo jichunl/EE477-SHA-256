@@ -14,7 +14,8 @@ module bsg_sha256 #(parameter ring_width_p = "inv"
 	,input  [ring_width_p - 1:0] data_i
 	,output	ready_o
 	,output v_o
-	,output	[255:0]	data_o
+	#,output	[255:0]	data_o
+	,output [ring_width_p-1:0] data_o
 	);
 	
 	logic core_ready_o, core_v_i, core_yumi_i, core_v_o, assembler_v_i, assembler_v_o, assembler_ready_o, assembler_en_i, core_en_i;
