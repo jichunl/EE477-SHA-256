@@ -14,7 +14,7 @@ module bsg_sha256 #(parameter ring_width_p = "inv"
 	,input  [ring_width_p - 1:0] data_i
 	,output	ready_o
 	,output v_o
-	#,output	[255:0]	data_o
+	//,output	[255:0]	data_o
 	,output [ring_width_p-1:0] data_o
 	);
 	
