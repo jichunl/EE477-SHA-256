@@ -26,7 +26,8 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 //		assembler_ready_o <= ready_o;			
 
 	bsg_assembler
-		assembler 	(.clk_i(clk_i)
+	#(.ring_width_p( ring_width_p), .id_p(id_p))assembler 
+				(.clk_i(clk_i)
 				,.reset_i(reset_i)
 				,.en_i(assembler_en_i)
 				,.v_i(assembler_v_i)
@@ -37,7 +38,8 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 				,.yumi_i(core_v_o)
 				);
 	SHA256_core
-		core
+		#(.ring_width_p( ring_width_p), .id_p(id_p))
+	core
 				(.clk_i(clk_i)
 				,.reset_i(reset_i)
 				,.en_i(core_en_i)
