@@ -3,7 +3,25 @@
 //
 //24-feb-18, added state machine, changed variable names
 //
+// This is the wrapper module for a single SHA256 node there are two parts the
+// SHA256_core and assembler
 //
+// Comments on update:
+// 	N/A
+//
+// input:
+// 	clk_i		
+// 	reset_i		
+// 	en_i
+// 	v_i		:indicates that input signal is valid
+// 	yumi_i		:indicates that the outside world has got the data
+//
+// output:
+// 	ready_o		:indicates that this module is ready for new data
+//	v_o		:indicates that the output data is valid
+//	data_o		
+//
+// Last modified on: Tue Feb 27 16:13:00 2018
 module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 	(input				clk_i
 	,input				reset_i
@@ -12,7 +30,7 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 	,input				yumi_i
 	,input	[ring_width_p-1:0] 	data_i
 	,output	logic			ready_o
-	,output logic				v_o
+	,output logic			v_o
 	,output	[255:0]			data_o
 	);							
 
