@@ -27,7 +27,7 @@ module  bsg_test_node_client #(parameter ring_width_p="inv"
   /** INSTANTIATE NODE 0 **/ 
   if ( client_id_p == 0 ) begin
 
-    SHA256_node #( .ring_width_p( ring_width_p - 5 )
+   SHA256_node#( .ring_width_p( ring_width_p - 5 )
                       , .id_p        ( client_id_p ))
       node
         (.clk_i   ( clk_i   )
