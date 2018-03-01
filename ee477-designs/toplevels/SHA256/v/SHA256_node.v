@@ -13,26 +13,11 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 	,input				yumi_i
 	,input	[ring_width_p-1:0] 	data_i
 	,output	logic			ready_o
-<<<<<<< HEAD
-	,output logic				v_o
-	//,output	[255:0]			data_o
-=======
 	,output logic			v_o
->>>>>>> 93e19d5b55da85286331247b2820ffd4428cc7ad
 	,output [ring_width_p-1:0]	data_o
 	);							
 
 	logic	core_ready_o, core_v_i, core_yumi_i, core_v_o, core_en_i
-<<<<<<< HEAD
-		,assembler_v_i, assembler_v_o,assembler_ready_o, assembler_en_i, assembler_yumi_i;
-	reg	[255:0]	assembler_data_o;
-//		assembler_v_i <= v_i;
-//		assembler_v_o <= v_o;
-//		assembler_ready_o <= ready_o;			
-
-	bsg_assembler
-	#(.ring_width_p( ring_width_p), .id_p(id_p))assembler 
-=======
 		,assembler_v_i, assembler_v_o,assembler_ready_o, assembler_en_i, assembler_yumi_i, deassembler_en_i, deassembler_v_o, deassembler_ready_o, deassembler_v_i;
 	reg	[255:0]	assembler_data_o, core_data_o;
 //		assembler_v_i <= v_i;
@@ -42,7 +27,6 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 
 	bsg_assembler
 		#(.ring_width_p( ring_width_p), .id_p(id_p))assembler 
->>>>>>> 93e19d5b55da85286331247b2820ffd4428cc7ad
 				(.clk_i(clk_i)
 				,.reset_i(reset_i)
 				,.en_i(assembler_en_i)
@@ -54,14 +38,8 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 				,.yumi_i(core_v_o)
 				);
 	SHA256_core
-<<<<<<< HEAD
-		#(.ring_width_p( ring_width_p), .id_p(id_p))
-	core
-				(.clk_i(clk_i)
-=======
 		#(.ring_width_p( ring_width_p), .id_p(id_p))core
 			(.clk_i(clk_i)
->>>>>>> 93e19d5b55da85286331247b2820ffd4428cc7ad
 				,.reset_i(reset_i)
 				,.en_i(core_en_i)
 			 ,.v_i(assembler_v_o)
@@ -200,6 +178,7 @@ module SHA256_node #(parameter ring_width_p = "inv"
 			,.ready_o(core_ready)
 			,.v_o(v_o)
 			,.digest_o(data_o)
+:w
 			);
 endmodule
 */

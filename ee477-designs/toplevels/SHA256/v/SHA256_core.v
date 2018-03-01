@@ -84,7 +84,7 @@ module SHA256_core #(parameter core_id = "inv")
 		msg_sch	(.M_i(block)
 			,.clk_i(clk_i)
 			,.reset_i(reset_i)
-			,.v_i(msg_sch_init)
+			,.init_i(msg_sch_init)
 			,.Wt_o(Wt_r)
 			);
 
@@ -120,13 +120,11 @@ module SHA256_core #(parameter core_id = "inv")
 					msg_n = msg_init;
 					v_n = 1'b0;
 					ctr_reset = 1'b1;
-					msg_sch_init = 1'b1;
 				end
 			end
 			
 			eBusy: begin
 				ctr_en = 1'b1;
-				msg_sch_init = 1'b0;
 				if (cycle_counter == 7'b1000000) begin
 					state_n = eDone;
 					digest_o = digest_r;
