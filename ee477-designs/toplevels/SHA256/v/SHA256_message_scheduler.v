@@ -174,18 +174,17 @@ module SHA256_message_scheduler
 	always @(*) begin
 		case(state_r)
 			1'b0:begin // wait
-				if (v_i) begin
-					cycle_counter = 6'b0;
+				ctr_en = 1'b0;
+				if (init_i) begin
 					state_n = 1'b1;
 				end
 			end
 
 			1'b1:begin // busy
-				if (cycle_counter == 6'b111111) begin
+				ctr_en = 1'b1;
+				if (ctr_r == 6'b111111) begin
 					state_n = 1'b0;
 				end
-				cycle_counter <= cycle_counter_next;
-
 			end
 
 			default: begin
