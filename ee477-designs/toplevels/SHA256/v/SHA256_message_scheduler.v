@@ -9,11 +9,12 @@
 //
 // output:
 // 	Wt_o:		the output Wt value
+
 module SHA256_message_scheduler
 	(input 	[511:0] M_i 
 	,input 		clk_i
 	,input		reset_i	
-        ,input 		v_i	
+        ,input 		init_i
 	,output [31:0] 	Wt_o 
 	);
 
@@ -22,20 +23,17 @@ module SHA256_message_scheduler
 	reg	[31:0]	word_next[15:0];
 	reg	[31:0]	wt;
 	// control logic
-	reg			write_en;
-	reg	[5:0]		cycle_counter, cycle_counter_next;
+	reg			write_en, ctr_reset, ctr_en;
+	reg	[5:0]		ctr_r, ctr_n;
 	reg			state_r, state_n; // busy = 1'b1, wait = 1'b0
 	reg [31:0] w_0, w_1, w_9, w_14, s0, s1, w_new;
 
 		
 
 	assign Wt_o = wt;
-
+	// word_mem update
 	always @(posedge clk_i)	begin
-
 		if (reset_i) begin
-			state_n		<= 1'b0;
-			cycle_counter   <= 6'b0;
 			word_mem[0] 	<= 32'b0;
 			word_mem[1] 	<= 32'b0;
 			word_mem[2] 	<= 32'b0;
@@ -52,6 +50,9 @@ module SHA256_message_scheduler
 			word_mem[13]	<= 32'b0;
 			word_mem[14] 	<= 32'b0;
 			word_mem[15] 	<= 32'b0;
+			write_en	<= 1'b0;
+			state_n		<= 1'b0;
+			ctr_reset	<= 1'b0;
 		end else begin
 			if (write_en) begin
 				word_mem[0]	<= word_next[0];
@@ -103,7 +104,7 @@ module SHA256_message_scheduler
 
 		w_new = w_0 + s0 + w_9 + s1;
 
-		if (v_i) begin
+		if (init_i) begin
 			write_en = 1'b1;
 			word_next[15] = M_i[31:0];
 			word_next[14] = M_i[63:32];
@@ -122,7 +123,7 @@ module SHA256_message_scheduler
 			word_next[1]  = M_i[479:448];
 			word_next[0]  = M_i[511:480];
 		end else begin
-			if (cycle_counter > 15) begin
+			if (ctr_r > 15) begin
 				write_en = 1'b1;
 				word_next[15] = w_new;
 				word_next[14] = word_mem[15];
@@ -145,16 +146,32 @@ module SHA256_message_scheduler
 	end
 
 	always_comb begin	
-		if (cycle_counter < 16) begin
-			wt <= word_mem[cycle_counter[3:0]];
+		if (ctr_r < 16) begin
+			wt <= word_mem[ctr_r[3:0]];
 		end else begin
 			wt <= w_new;
 		end
-	end	
+	end
 
-	assign cycle_counter_next = cycle_counter + 1'b1;
+	assign ctr_n = ctr_r + 1'b1;
 
-	always @(*) begin	
+	// cycle update
+	always_ff @(posedge clk_i) begin
+		if (reset_i | ctr_reset) begin
+			assign ctr_r = 6'b0;
+		end else if (ctr_en) begin
+			assign ctr_r = ctr_n;
+		end else begin
+			assign ctr_r = ctr_r;
+		end
+	end
+	
+	// state update
+	always_ff @(posedge clk_i) begin
+		assign state_r = reset_i ? 1'b0:state_n;
+	end
+
+	always @(*) begin
 		case(state_r)
 			1'b0:begin // wait
 				if (v_i) begin
@@ -175,5 +192,6 @@ module SHA256_message_scheduler
 				state_n = 1'b0;
 			end
 		endcase
+
 	end
 endmodule
