@@ -133,29 +133,29 @@ module SHA256_message_scheduler
 
     always_comb begin    
         if (ctr_r < 16) begin
-            wt <= word_mem[ctr_r[3:0]];
+            wt = word_mem[ctr_r[3:0]];
         end else begin
-            wt <= w_new;
+            wt = w_new;
         end
     end
 
     // cycle update
     always_ff @(posedge clk_i) begin
         if (reset_i | ctr_rst) begin
-            assign ctr_r = 7'b0;
+            ctr_r <= 7'b0;
         end else if (ctr_en) begin
-            assign ctr_r = ctr_r + 1'b1;
+            ctr_r <= ctr_r + 1'b1;
         end else begin
-            assign ctr_r = ctr_r;
+            ctr_r <= ctr_r;
         end
     end
 
     // state update
     always_ff @(posedge clk_i) begin
         if (reset_i) begin
-            assign state_r = 1'b0;
+            state_r <= 1'b0;
         end else begin
-            assign state_r = state_n;
+            state_r <= state_n;
         end
     end
 

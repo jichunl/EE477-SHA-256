@@ -108,7 +108,7 @@ module SHA256_core #(parameter core_id = "inv")
 	end
 	
 	always_ff @(posedge clk_i) begin
-		assign cycle_counter = (ctr_reset | reset_i) ? 6'b0:cycle_counter_n;
+		cycle_counter <= (ctr_reset | reset_i) ? 6'b0:cycle_counter_n;
 	end
 
 
