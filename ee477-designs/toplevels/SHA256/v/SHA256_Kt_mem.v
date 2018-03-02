@@ -6,12 +6,13 @@
 // output:
 // 	Kt_o: the Kt value that will be used in compression module
 module SHA256_Kt_mem
-	(input 	[5:0]	addr
+	(input 	[6:0]	addr
 	,output	[31:0]	Kt_o
 	);
 
 
 	reg [31:0] Kt_r;
+        assign Kt_o = Kt_r;
 	
 	always @(*) begin
 		case(addr)

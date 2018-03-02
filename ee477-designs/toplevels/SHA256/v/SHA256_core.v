@@ -63,7 +63,7 @@ module SHA256_core #(parameter core_id = "inv")
 //	assign v_o = v_r;
 
 	reg 		ctr_en, ctr_reset;
-	reg	[7:0]	cycle_counter, cycle_counter_n;
+	reg	[6:0]	cycle_counter, cycle_counter_n;
 	assign cycle_counter_n = cycle_counter + 1'b1;
 	
 	reg msg_sch_init;
