@@ -1,4 +1,4 @@
-// This is the SHA256_core module which combines pre-processing, message
+// This is the SHA256_core module which comb/ines pre-processing, message
 // message scheduler and compression together
 //
 // Comment on update:
@@ -28,8 +28,8 @@ module SHA256_core #(parameter core_id = "inv")
 	,input 				yumi_i
 	,input		[255:0]		msg_i
 
-	,output 			ready_o
-	,output 			v_o
+	,output 	logic		ready_o
+	,output 	logic		v_o
 	,output reg	[255:0]		digest_o
 	);
 
@@ -60,7 +60,7 @@ module SHA256_core #(parameter core_id = "inv")
 	reg	[511:0]		block;
 	// control logic
 	reg			v_r, v_n;
-	assign v_o = v_r;
+//	assign v_o = v_r;
 
 	reg 		ctr_en, ctr_reset;
 	reg	[7:0]	cycle_counter, cycle_counter_n;
@@ -115,7 +115,10 @@ module SHA256_core #(parameter core_id = "inv")
 	always_comb begin
 		case(state_r)
 			eWait: begin
-				if (ready_o & v_i) begin
+		
+			      ready_o = 1'b1;
+                                  v_o = 1'b0;
+			if (v_i==1'b1) begin
 					state_n = eBusy;
 					msg_n = msg_init;
 					v_n = 1'b0;
@@ -129,10 +132,16 @@ module SHA256_core #(parameter core_id = "inv")
 					state_n = eDone;
 					digest_o = digest_r;
 					v_n = 1'b1;
+					  ready_o = 1'b0;
+                                        v_o = 1'b0;
+
 				end else begin
 					state_n = eBusy;
 					v_n = 1'b0;
 					msg_n = digest_r;
+					    ready_o = 1'b0;
+                                        v_o = 1'b0;
+
 				end
 			end
 
@@ -141,6 +150,9 @@ module SHA256_core #(parameter core_id = "inv")
 					state_n = eWait;
 					ctr_en = 1'b0;
 					ctr_reset = 1'b1;
+					      ready_o = 1'b0;
+                                        v_o = 1'b1;
+
 				end
 			end
 			
