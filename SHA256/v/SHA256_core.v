@@ -1,4 +1,4 @@
-// This is the SHA256_core module which combines pre-processing, message
+// This is the SHA256_core module which comb/ines pre-processing, message
 // message scheduler and compression together
 //
 // Comment on update:
@@ -20,25 +20,19 @@
 // 	digest_o:	the result of hashing
 //
 // Last modified on: Tue Feb 27 15:54:07 2018
-module SHA256_core #(parameter ring_width_p="inv"           ,parameter id_p="inv")
-
+module SHA256_core #(parameter core_id = "inv")
 	(input 				clk_i
 	,input 				reset_i
 	,input 				en_i
 	,input 				v_i
 	,input 				yumi_i
-//	,input		[255:0]		msg_i
-	,input  [ring_width_p -1 :0] data_i						//added
+	,input		[255:0]		msg_i
 
-	,output logic			ready_o
-	,output logic 			v_o
-//	,output reg	[255:0]		digest_o
-	,output reg   [255:0]         data_o						//added
+	,output 	logic		ready_o
+	,output 	logic		v_o
+	,output reg	[255:0]		digest_o
 	);
-	
 
-	reg 	[255:0] 	msg_i=256'b0;							//added	
-									//added
 	parameter SHA256_H0 = 32'h6a09e667;
 	parameter SHA256_H1 = 32'hbb67ae85;
 	parameter SHA256_H2 = 32'h3c6ef372;
@@ -52,12 +46,11 @@ module SHA256_core #(parameter ring_width_p="inv"           ,parameter id_p="inv
 			     ,SHA256_H3, SHA256_H2, SHA256_H1, SHA256_H0
 			     };
 
-	reg 	[255:0] 	digest_o;						//added
-	assign data_o = digest_o;							//added
+
 	reg 	[255:0]    	digest_r;
 	reg	[31:0]		Kt_r;
 	reg	[31:0]		Wt_r;
-	
+logic ctr_en;	
 	// state
 	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
 	state_e state_n, state_r;	
@@ -69,12 +62,12 @@ module SHA256_core #(parameter ring_width_p="inv"           ,parameter id_p="inv
 //	reg			v_r, v_n;
 //	assign v_o = v_r;
 
-	reg 		ctr_en, ctr_reset;
-	reg	[5:0]	cycle_counter, cycle_counter_n;
-	assign cycle_counter_n = cycle_counter + 1'b1;
+	reg 		 ctr_reset;
+	reg	[7:0]	cycle_counter;//, cycle_counter_n;
+//	assign cycle_counter_n = cycle_counter + 1'b1;
 	
 	reg msg_sch_init;
-	assign msg_sch_init = (state_n == eBusy);
+	assign  msg_sch_init = (state_n == eBusy);
 
 
 	SHA256_pre_processing
@@ -91,7 +84,7 @@ module SHA256_core #(parameter ring_width_p="inv"           ,parameter id_p="inv
 		msg_sch	(.M_i(block)
 			,.clk_i(clk_i)
 			,.reset_i(reset_i)
-			,.v_i(msg_sch_init)
+			,.init_i(msg_sch_init)
 			,.Wt_o(Wt_r)
 			);
 
@@ -106,48 +99,64 @@ module SHA256_core #(parameter ring_width_p="inv"           ,parameter id_p="inv
 		if (reset_i) begin
 			state_r <= eWait;
 			msg_r <= 256'b0;
-//			v_r <= 1'b0;
+		//	v_r <= 1'b0;
 		end else begin
 			state_r <= state_n;
 			msg_r <= msg_n;
-//			v_r <= v_n;
+		//	v_r <= v_n;
 		end
 	end
 	
-	always_ff @(posedge clk_i) begin
-		assign cycle_counter = (ctr_reset | reset_i) ? 6'b0:cycle_counter_n;
+//	always_ff @(posedge clk_i) begin
+//		 cycle_counter = (ctr_reset | reset_i) ? 6'b0:cycle_counter_n;
+//	end
+
+
+    always_ff @(posedge clk_i) 
+	begin
+        if (reset_i | ctr_reset)
+	 begin
+             cycle_counter = 7'b0;
+        end
+	 else if (ctr_en) begin
+             cycle_counter = cycle_counter + 1'b1;
+	    end
 	end
 
 
 	always_comb begin
 		case(state_r)
 			eWait: begin
-				  ready_o = 1'b1;
+		
+			      ready_o = 1'b1;
                                   v_o = 1'b0;
-
-			//	if (ready_o & v_i) begin
-				if (v_i==1'b1) begin
+			if (v_i==1'b1) begin
 					state_n = eBusy;
 					msg_n = msg_init;
-//					v_n = 1'b0;
+			//		v_n = 1'b0;
 					ctr_reset = 1'b1;
 				end
 			end
 			
 			eBusy: begin
 				ctr_en = 1'b1;
-				if (cycle_counter == 64) begin
+				                                        ctr_reset=1'b0;
+
+				if (cycle_counter == 7'b1000000) begin
 					state_n = eDone;
 					digest_o = digest_r;
-//					v_n = 1'b1;
-					ready_o = 1'b0;
-					v_o = 1'b0;
+			//		v_n = 1'b1;
+					  ready_o = 1'b0;
+                                        v_o = 1'b0;
+//					ctr_reset=1'b0;
 				end else begin
 					state_n = eBusy;
-//					v_n = 1'b0;
+			//		v_n = 1'b0;
 					msg_n = digest_r;
-					ready_o = 1'b0;
-					v_o = 1'b0;
+					    ready_o = 1'b0;
+                                        v_o = 1'b0;
+					
+
 				end
 			end
 
@@ -156,8 +165,9 @@ module SHA256_core #(parameter ring_width_p="inv"           ,parameter id_p="inv
 					state_n = eWait;
 					ctr_en = 1'b0;
 					ctr_reset = 1'b1;
-					ready_o = 1'b0;
-					v_o = 1'b1;
+					      ready_o = 1'b0;
+                                        v_o = 1'b1;
+
 				end
 			end
 			
