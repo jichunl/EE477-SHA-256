@@ -12,8 +12,7 @@ module SHA256_Kt_mem
 
 
 	reg [31:0] Kt_r;
-        assign Kt_o = Kt_r;
-	
+	assign Kt_o = Kt_r;
 	always @(*) begin
 		case(addr)
 			6'b000000: Kt_r = 32'h428a2f98;

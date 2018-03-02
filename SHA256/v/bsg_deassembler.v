@@ -27,7 +27,7 @@ logic [63:0] in1_out;
 logic [63:0] in2_out;
 logic [63:0] in3_out;
 logic [63:0] in4_out;
-//logic [63:0] data_o_mid;
+logic [63:0] data_o_mid;
 
 
 assign in1_out = data_i [63:0];
@@ -47,6 +47,7 @@ localparam OUT4 = 3'b100;
 
 reg [2:0] state,state_next;
 
+//assign data_o = {{(11){1'b0}}, data_o_mid};
 
 //assign data_o = {{(11){1'b0}}, data_o_mid};
  
@@ -106,6 +107,9 @@ OUT1:
         en2_i = 1'b0;
         en3_i = 1'b0;
         en4_i = 1'b0;
+//data_o = {{(11){1'b0}}, da\_out};
+	
+//data_o = in1_out; 
         end
 
 OUT2:

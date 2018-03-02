@@ -9,7 +9,7 @@ module bsg_assembler #(parameter ring_width_p="inv"           ,parameter id_p="i
 
   ,input                     v_i
 
-  ,input  [ring_width_p-1:0] data_i
+  ,input  [ring_width_p -1 :0] data_i
   ,output            logic        ready_o
 
   ,output logic          	v_o
