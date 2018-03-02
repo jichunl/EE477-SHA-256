@@ -23,7 +23,7 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 //		assembler_v_i <= v_i;
 //		assembler_v_o <= v_o;
 //		assembler_ready_o <= ready_o;			
-	
+ reg [2:0] counter,counter_n;
 
 	bsg_assembler
 		#(.ring_width_p( ring_width_p), .id_p(id_p))assembler 
@@ -63,7 +63,6 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
                                 ,.data_o(data_o)
                                 );
 	
-
 	localparam WAIT	= 2'b00;
 	localparam CALC	= 2'b01;
 	localparam DONE	= 2'b10;
@@ -105,11 +104,14 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 				end
 			end
 			DONE: begin
+				if(deassembler_v_o)
+				begin
 				ready_o = 1'b0;
 				v_o	= 1'b1;
 				assembler_en_i = 1'b0;
 				core_en_i = 1'b0;
 				deassembler_en_i = 1'b1;
+				end
 			end
 		endcase
 	end
@@ -129,8 +131,14 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 						state_next = DONE;
 				end
    				DONE: begin
-					if (yumi_i)
-						state_next = WAIT;
+					if (yumi_i == 1'b1)
+					begin
+					counter = counter + 1;			
+					end	
+					if(counter == 3'b100)	
+					begin	
+					state_next = WAIT;			
+					end
 				end
 			endcase
 		end
