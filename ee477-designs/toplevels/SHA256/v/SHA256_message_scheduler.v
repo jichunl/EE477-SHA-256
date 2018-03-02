@@ -144,6 +144,7 @@ module SHA256_message_scheduler
 		end
 	end
 
+<<<<<<< HEAD
 	always_comb begin	
 		if (cycle_counter < 16) begin
 			wt <= word_mem[cycle_counter[3:0]];
@@ -162,6 +163,35 @@ module SHA256_message_scheduler
 					state_n = 1'b1;
 				end
 			end
+=======
+    always_comb begin    
+        if (ctr_r < 16) begin
+            wt = word_mem[ctr_r[3:0]];
+        end else begin
+            wt = w_new;
+        end
+    end
+
+    // cycle update
+    always_ff @(posedge clk_i) begin
+        if (reset_i | ctr_rst) begin
+            ctr_r <= 7'b0;
+        end else if (ctr_en) begin
+            ctr_r <= ctr_r + 1'b1;
+        end else begin
+            ctr_r <= ctr_r;
+        end
+    end
+
+    // state update
+    always_ff @(posedge clk_i) begin
+        if (reset_i) begin
+            state_r <= 1'b0;
+        end else begin
+            state_r <= state_n;
+        end
+    end
+>>>>>>> 9053457af93b12343d8e1b7f7341bfb3e51da7aa
 
 			1'b1:begin // busy
 				if (cycle_counter == 6'b111111) begin
