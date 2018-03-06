@@ -44,9 +44,10 @@ set bsg_pinout_iopad_mapping $::env(BSG_PINOUT_IOPAD_MAPPING)
 set bsg_hard_swap_source_files [join "
     ${bsg_ip_cores_dir}/hard/saed_90/bsg_misc/bsg_mux2_gatestack.v
     ${bsg_ip_cores_dir}/hard/saed_90/bsg_misc/bsg_dff_gatestack.v
-    ${bsg_ip_cores_dir}/hard/saed_90/bsg_mem/bsg_mem_1rw_sync.v
-    ${bsg_ip_cores_dir}/hard/saed_90/bsg_mem/bsg_mem_1rw_sync_mask_write_byte.v
 "]
+#    ${bsg_ip_cores_dir}/hard/saed_90/bsg_mem/bsg_mem_1rw_sync.v
+#    ${bsg_ip_cores_dir}/hard/saed_90/bsg_mem/bsg_mem_1rw_sync_mask_write_byte.v
+#"]
 
 
 # bsg_new_sverilog_source_files

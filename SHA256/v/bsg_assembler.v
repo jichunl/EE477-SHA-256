@@ -172,7 +172,7 @@ DONE:
         en3_i = 1'b0;
         en4_i = 1'b0;
 
-	assign data_o = {in4_out,in3_out,in2_out,in1_out};
+	data_o = {in4_out,in3_out,in2_out,in1_out};
 
 //	assign data_o = {in4_out,in3_out,in2_out,in1_out};
 

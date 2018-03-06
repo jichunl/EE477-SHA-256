@@ -2,6 +2,11 @@
 // message scheduler and compression together
 //
 // Comment on update:
+// 	add H0 back to message when cycle_counter reaches 64
+// 	-----------------------------------------------------------------------
+// 	remove v_r, v_n; use assign in FSM to get v_o; change cycle counter
+// 	update logic
+// 	-----------------------------------------------------------------------
 // 	create a dff for cycle_counter to deal with ICSD error
 //	add 2 new control signal ctr_reset (cycle_conter_reset) and ctr_en
 //	(cycle_counter_enable)
@@ -59,12 +64,8 @@ logic ctr_en;
 	reg	[255:0]		msg_r, msg_n;
 	reg	[511:0]		block;
 	// control logic
-//	reg			v_r, v_n;
-//	assign v_o = v_r;
-
 	reg 		 ctr_reset;
-	reg	[7:0]	cycle_counter;//, cycle_counter_n;
-//	assign cycle_counter_n = cycle_counter + 1'b1;
+	reg	[6:0]	cycle_counter;
 	
 	reg msg_sch_init;
 	assign  msg_sch_init = (state_n == eBusy);
@@ -76,7 +77,7 @@ logic ctr_en;
 			);
 
 	SHA256_Kt_mem
-		Kt_mem	(.addr(cycle_counter)
+		Kt_mem	(.addr(cycle_counter[5:0])
 			,.Kt_o(Kt_r)
 			);		
 
@@ -99,61 +100,45 @@ logic ctr_en;
 		if (reset_i) begin
 			state_r <= eWait;
 			msg_r <= 256'b0;
-		//	v_r <= 1'b0;
 		end else begin
 			state_r <= state_n;
 			msg_r <= msg_n;
-		//	v_r <= v_n;
 		end
 	end
 	
-//	always_ff @(posedge clk_i) begin
-//		 cycle_counter = (ctr_reset | reset_i) ? 6'b0:cycle_counter_n;
-//	end
-
-
-    always_ff @(posedge clk_i) 
-	begin
-        if (reset_i | ctr_reset)
-	 begin
-             cycle_counter = 7'b0;
-        end
-	 else if (ctr_en) begin
-             cycle_counter = cycle_counter + 1'b1;
-	    end
+    	always_ff @(posedge clk_i) begin
+        	if (reset_i | ctr_reset) begin
+             		cycle_counter = 7'b0;
+        	end else if (ctr_en) begin
+            		cycle_counter = cycle_counter + 1'b1;
+	    	end
 	end
 
 
 	always_comb begin
 		case(state_r)
-			eWait: begin
-		
-			      ready_o = 1'b1;
-                                  v_o = 1'b0;
-			if (v_i==1'b1) begin
+			eWait: begin	
+				ready_o = 1'b1;
+                        	v_o = 1'b0;
+				if (v_i==1'b1) begin
 					state_n = eBusy;
 					msg_n = msg_init;
-			//		v_n = 1'b0;
 					ctr_reset = 1'b1;
 				end
 			end
 			
 			eBusy: begin
 				ctr_en = 1'b1;
-				                                        ctr_reset=1'b0;
-
-				if (cycle_counter == 7'b1000000) begin
+                                ctr_reset=1'b0;
+				if (cycle_counter == 7'b0111111) begin
 					state_n = eDone;
-					digest_o = digest_r;
-			//		v_n = 1'b1;
-					  ready_o = 1'b0;
+					digest_o = digest_r + msg_init;
+					ready_o = 1'b0;
                                         v_o = 1'b0;
-//					ctr_reset=1'b0;
 				end else begin
 					state_n = eBusy;
-			//		v_n = 1'b0;
 					msg_n = digest_r;
-					    ready_o = 1'b0;
+					ready_o = 1'b0;
                                         v_o = 1'b0;
 					
 
@@ -165,18 +150,14 @@ logic ctr_en;
 					state_n = eWait;
 					ctr_en = 1'b0;
 					ctr_reset = 1'b1;
-					      ready_o = 1'b0;
+					ready_o = 1'b0;
                                         v_o = 1'b1;
-
 				end
 			end
-			
+
 			default: begin
 				state_n = eWait;
 			end
 		endcase
 	end
-
-
-
 endmodule

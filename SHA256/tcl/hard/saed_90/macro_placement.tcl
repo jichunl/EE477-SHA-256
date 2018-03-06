@@ -39,6 +39,6 @@ proc bsg_place_macro { name x_origin y_origin orientation {x_cord 0} {y_cord 0} 
 # TODO: Define where you want your macros here!
 
 #bsg_place_macro <name> <x location> <y location> <orientation = N,S,E,W>
-	bsg_place_macro guts/n_2__clnt_clnt/genblk1_node/bm/y_0__x_0__tile/proc/h_z/bnkd_xbar/z_0__m1rw_mask/macro_mem 2866 2073.62 N
-	bsg_place_macro guts/n_2__clnt_clnt/genblk1_node/bm/y_0__x_0__tile/proc/h_z/vanilla_core/imem_0/macro_mem 2886 4148.18 N
+#	bsg_place_macro guts/n_2__clnt_clnt/genblk1_node/bm/y_0__x_0__tile/proc/h_z/bnkd_xbar/z_0__m1rw_mask/macro_mem 2866 2073.62 N
+#	bsg_place_macro guts/n_2__clnt_clnt/genblk1_node/bm/y_0__x_0__tile/proc/h_z/vanilla_core/imem_0/macro_mem 2886 4148.18 N
 

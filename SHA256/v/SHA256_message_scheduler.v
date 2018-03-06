@@ -56,7 +56,6 @@ module SHA256_message_scheduler
             word_mem[13]	<= 32'b0;
             word_mem[14]	<= 32'b0;
             word_mem[15]	<= 32'b0;
-            write_en		<= 1'b0;
         end else begin
             if (write_en) begin
                 word_mem[0]	<= word_next[0];
@@ -110,7 +109,7 @@ module SHA256_message_scheduler
             word_next[0]  = M_i[511:480];
         end else begin
             if (ctr_r > 15) begin
-                write_en = 1'b1;
+		write_en = 1'b1;
                 word_next[15] = w_new;
                 word_next[14] = word_mem[15];
 		word_next[13] = word_mem[14];
