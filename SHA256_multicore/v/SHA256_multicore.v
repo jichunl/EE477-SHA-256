@@ -41,10 +41,13 @@ module SHA256_multicore #(parameter core_size = "inv")
 	reg		core_ctr_rst, core_ctr_en;
 	reg [5:0]	core_ctr;
 
-	
+	reg [255:0] midstate;
+	assign midstate = 256'h56f6950a86a3a5297961969c7bfdb28c54c9af5a951237b87979d96fc01823e1;
 	// pre_proc
 	reg [511:0] block;
 
+	
+	
 	SHA256_pre_processing
 		pre_proc(.msg_i(data_i)
 			,.pre_proc_o(block)
