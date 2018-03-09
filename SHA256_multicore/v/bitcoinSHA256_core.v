@@ -2,9 +2,6 @@
 // message scheduler and compression together
 //
 // Comment on update:
-// 	remove v_r, v_n and assign v_o directly in FSM; changed cycle_counter
-// 	update logic
-// 	------------------------------------------------------------------------
 // 	create a dff for cycle_counter to deal with ICSD error
 //	add 2 new control signal ctr_reset (cycle_conter_reset) and ctr_en
 //	(cycle_counter_enable)
@@ -22,18 +19,21 @@
 // 	v_o:		indicates that this module has produced valid outputfe
 // 	digest_o:	the result of hashing
 //
-// Last modified on: Thu Mar  1 21:24:16 2018
-module SHA256_core #(parameter core_id = "inv")
+// Last modified on: Tue Feb 27 15:54:07 2018
+//
+//
+//
+module bitcoinSHA256_core #(parameter core_id = "inv")
 	(input 				clk_i
 	,input 				reset_i
+	,input				reset2_i
 	,input 				en_i
 	,input 				v_i
 	,input 				yumi_i
-	,input		[511:0]		msg_i
-	,input		[31:0]		Kt_i
-	,input		[5:0]		core_ctr_i
-	,output logic			ready_o
-	,output logic			v_o
+	,input		[95:0]		msg_i
+	,input		[31:0]		nonce
+	,output 	logic		ready_o
+	,output 	logic		v_o
 	,output reg	[255:0]		digest_o
 	);
 
@@ -52,83 +52,132 @@ module SHA256_core #(parameter core_id = "inv")
 
 
 	reg 	[255:0]    	digest_r;
+	reg	[31:0]		Kt_r;
 	reg	[31:0]		Wt_r;
-        reg     [255:0] 	midstate;
-	assign midstate = 256'h56f6950a86a3a5297961969c7bfdb28c54c9af5a951237b87979d96fc01823e1;	
-	// state
+	logic ctr_en;
+	
 	typedef enum [1:0] {eWait, eBusy, eDone} state_e;
 	state_e state_n, state_r;	
 	
-	// data flow
+	reg [127:0]	padder_i;
+	assign padder_i = {msg_i , nonce};
+
 	reg	[255:0]		msg_r, msg_n;
-	 
+	reg	[511:0]		block;
+	reg 		 ctr_reset;
+	reg	[6:0]	cycle_counter;
 	
 	reg msg_sch_init;
 	assign  msg_sch_init = (state_n == eBusy);
 
+	reg     [255:0]         midstate;
+        assign midstate = 256'h56f6950a86a3a5297961969c7bfdb28c54c9af5a951237b87979d96fc01823e1;
+
+	wire [95:0] send_i;
+//	assign block1 = {msg_i,midstate};
+//	reg   [511:0] block1;
+	
+
+	SHA256_pre_processing
+		pre_proc(.msg_i(padder_i)
+			,.pre_proc_o(block)
+			,.en_i(order_i)
+			);
+
+	SHA256_Kt_mem
+		Kt_mem	(.addr(cycle_counter[5:0])
+			,.Kt_o(Kt_r)
+			);		
+
 	SHA256_message_scheduler
-		msg_sch	(.M_i(msg_i)
+		msg_sch	(.M_i(block)
 			,.clk_i(clk_i)
 			,.reset_i(reset_i)
 			,.init_i(msg_sch_init)
-			,.core_ctr_i(core_ctr_i)
 			,.Wt_o(Wt_r)
 			);
 
 	SHA256_compression
 		comp	(.message_i({msg_r})
-			,.Kt_i(Kt_i)
+		,.Kt_i(Kt_r)
 			,.Wt_i(Wt_r)
 			,.digest_o(digest_r)
 			);
+//	logic done;
+//	SHA256_message_scheduler2
+//	   msg2 (.padded(block)
+//	    ,.clk(clk_i)
+//	    ,.rst(reset_i)
+//	    ,.hashed(digest_r)
+///	    ,.done(done)
+//	    );
+//
 
 	always @(posedge clk_i) begin
-		if (reset_i) begin
+		if (reset_i|reset2_i) begin
 			state_r <= eWait;
 			msg_r <= 256'b0;
-		end else if (en_i) begin
+		end else begin
 			state_r <= state_n;
 			msg_r <= msg_n;
-		end else begin
-			state_r <= state_r;
-			msg_r <= msg_r;
 		end
 	end
 	
+    	always_ff @(posedge clk_i) begin
+        	if (reset_i | ctr_reset | reset2_i) begin
+             		cycle_counter = 7'b0;
+        	end else if (ctr_en) begin
+            		cycle_counter = cycle_counter + 1'b1;
+	    	end
+	end
+
+
 	always_comb begin
 		case(state_r)
-			eWait: begin
+			eWait: begin	
 				ready_o = 1'b1;
-                                v_o = 1'b0;
-				if (v_i) begin
+                        	v_o = 1'b0;
+				if (v_i==1'b1) begin
 					state_n = eBusy;
 					msg_n = msg_init;
+					ctr_reset = 1'b1;
 				end
 			end
 			
 			eBusy: begin
-				v_o = 1'b0;
-				ready_o = 1'b0;
-				if (core_ctr_i == 6'b111111) begin
+				ctr_en = 1'b1;
+                                ctr_reset=1'b0;
+				if (cycle_counter == 7'b0111111) begin
 					state_n = eDone;
 					digest_o = digest_r + msg_init;
+				
+				//	digest_o = digest_r;
+					ready_o = 1'b0;
+                                        v_o = 1'b0;
 				end else begin
 					state_n = eBusy;
 					msg_n = digest_r;
+					ready_o = 1'b0;
+                                        v_o = 1'b0;
+					
+
 				end
 			end
 
 			eDone: begin
-				v_o = 1'b1;
-				ready_o = 1'b1;
 				if (yumi_i) begin
 					state_n = eWait;
-                                end
+					ctr_en = 1'b0;
+					ctr_reset = 1'b1;
+					ready_o = 1'b0;
+                                        v_o = 1'b1;
+				end
 			end
-			
+
 			default: begin
 				state_n = eWait;
 			end
 		endcase
 	end
 endmodule
+

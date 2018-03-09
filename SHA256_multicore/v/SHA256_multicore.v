@@ -30,24 +30,24 @@ module SHA256_multicore #(parameter core_size = "inv")
 	,input			en_i
 	,input			v_i
 	,input			yumi_i
-	,input		[255:0]	data_i
+	,input		[95:0]	data_i
 	,output	logic		ready_o
 	,output logic		v_o
 	,output 	[255:0]	data_o
 	);							
 
 
+	reg     [255:0]         midstate;
+        assign midstate = 256'h56f6950a86a3a5297961969c7bfdb28c54c9af5a951237b87979d96fc01823e1;
+
 	// cycle_counter reg
 	reg		core_ctr_rst, core_ctr_en;
 	reg [5:0]	core_ctr;
 
-	reg [255:0] midstate;
-	assign midstate = 256'h56f6950a86a3a5297961969c7bfdb28c54c9af5a951237b87979d96fc01823e1;
+	
 	// pre_proc
 	reg [511:0] block;
 
-	
-	
 	SHA256_pre_processing
 		pre_proc(.msg_i(data_i)
 			,.pre_proc_o(block)

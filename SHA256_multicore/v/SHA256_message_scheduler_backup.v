@@ -24,9 +24,6 @@ module SHA256_message_scheduler
     ,output [31:0]	Wt_o 
     );
 
-
-
-
     // data flow
     reg	[31:0]	word_mem [15:0];
     reg	[31:0]	word_next[15:0];
@@ -34,14 +31,13 @@ module SHA256_message_scheduler
 
     // control logic
     reg		write_en, ctr_rst, ctr_en;
-    reg	[5:0]	ctr_r;
+    reg	[6:0]	ctr_r;
     reg		state_r, state_n;
     reg [31:0]	w_0, w_1, w_9, w_14, s0, s1, w_new;
         
     assign Wt_o = wt;
 
     // word_mem update
-    
     always @(posedge clk_i)    begin
         if (reset_i) begin
             word_mem[0]		<= 32'b0;
@@ -60,6 +56,7 @@ module SHA256_message_scheduler
             word_mem[13]	<= 32'b0;
             word_mem[14]	<= 32'b0;
             word_mem[15]	<= 32'b0;
+       //     write_en		<= 1'b0;
         end else begin
             if (write_en) begin
                 word_mem[0]	<= word_next[0];
@@ -81,28 +78,8 @@ module SHA256_message_scheduler
             end
         end
     end
-   	/* 
-	always @(posedge clk_i) begin
-		if (reset_i) begin
-			genvar i;
-			generate
-				for(i=0;i<16;i++) begin
-					word_mem[i] <= 32'b0;
-				end
-			endgenerate
-		end else begin
-			if (write_en) begin
-				word_mem <= word_next;
-			end
-		end
-	end
-
-*/
-
-
-
-
-    always_comb begin
+    
+    always @(*) begin
         w_0 = word_mem[0];
         w_1 = word_mem[1];
         w_9 = word_mem[9];
@@ -113,7 +90,7 @@ module SHA256_message_scheduler
 
         w_new = w_0 + s0 + w_9 + s1;
         
-        if (ctr_r < 15 & init_i) begin
+        if (init_i) begin
             write_en = 1'b1;
             word_next[15] = M_i[31:0];
             word_next[14] = M_i[63:32];
@@ -132,8 +109,8 @@ module SHA256_message_scheduler
             word_next[1]  = M_i[479:448];
             word_next[0]  = M_i[511:480];
         end else begin
-            //if (ctr_r > 15) begin
-		write_en = 1'b1;
+            if (ctr_r > 15) begin
+                write_en = 1'b1;
                 word_next[15] = w_new;
                 word_next[14] = word_mem[15];
 		word_next[13] = word_mem[14];
@@ -150,24 +127,22 @@ module SHA256_message_scheduler
                 word_next[2]  = word_mem[3];
                 word_next[1]  = word_mem[2];
                 word_next[0]  = word_mem[1];
-            //end
+            end
         end
     end
 
-    always_comb begin
-	if (ctr_r == 0) begin
-		wt = M_i[511:480];
-	end else if (ctr_r < 16) begin
-            	wt = word_mem[ctr_r[3:0]];
+    always_comb begin    
+        if (ctr_r < 16) begin
+            wt <= word_mem[ctr_r[3:0]];
         end else begin
-            	wt = w_new;
+            wt <= w_new;
         end
     end
 
     // cycle update
     always_ff @(posedge clk_i) begin
         if (reset_i | ctr_rst) begin
-             ctr_r = 6'b0;
+             ctr_r = 7'b0;
         end else if (ctr_en) begin
              ctr_r = ctr_r + 1'b1;
         end else begin
@@ -199,7 +174,7 @@ module SHA256_message_scheduler
             1'b1:begin // busy
                 ctr_en = 1'b1;
                 ctr_rst = 1'b0;
-                if (ctr_r == 6'b111111) begin
+                if (ctr_r == 7'b1000000) begin
                     state_n = 1'b0;
                     ctr_en = 1'b0;
                     ctr_rst = 1'b1;
