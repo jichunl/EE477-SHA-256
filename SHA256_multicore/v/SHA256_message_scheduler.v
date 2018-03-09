@@ -132,10 +132,12 @@ module SHA256_message_scheduler
     end
 
     always_comb begin    
-        if (core_ctr_i < 16) begin
-            wt <= word_mem[core_ctr_i[3:0]];
+        if (core_ctr_i == 0 & init) begin
+		wt = M_i[511:480];
+	end else if (core_ctr_i < 16) begin
+            	wt = word_mem[core_ctr_i[3:0]];
         end else begin
-            wt <= w_new;
+            	wt = w_new;
         end
     end
 
