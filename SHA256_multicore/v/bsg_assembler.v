@@ -20,133 +20,73 @@ module bsg_assembler
   	,input		[63:0] data_i
   	,output	logic        	ready_o
   	,output	logic          	v_o
-  	,output	reg	[255:0] data_o
+  	,output	reg	[95:0] data_o
   	);
 
-	wire [63:0] join_i;
+	
 
-	wire [63:0] in1_out;
-	wire [63:0] in2_out;
-	wire [63:0] in3_out;
-	wire [63:0] in4_out;
-
+	wire [63:0] first_out;
+	wire [31:0] in1_i;
+	wire [31:0] in2_i;
+	wire [31:0] second_i;
+	wire [31:0] second_o;
 	assign join_i = data_i;  //first pass
+	assign in1_i = data_i [31:0];
+	assign in2_i = data_i [63:32];
+	assign second_i = data_i [31:0];
 
-	localparam IN1 = 3'b000;
-	localparam IN2 = 3'b001;
-	localparam IN3 = 3'b010;
-	localparam IN4 = 3'b011;
-	localparam DONE = 3'b100;
-	localparam WAIT = 3'b111;
-
-	reg [2:0] state, state_n;
+	localparam IN1 = 2'b00;
+	localparam IN2 = 2'b01;
+	localparam DONE = 2'b10;
+	reg [1:0] state, state_next;
 	
 	logic en_1; 
 	logic en_2;
-	logic en_3;
-	logic en_4;
 
-
+	
+	wire [63:0] first_i;
+	wire [63:0] first_o;
+	assign first_i = {in2_i, in1_i};
 	bsg_dff_en #(.width_p(64))
 		in1	(.clock_i(clk_i)
-            		,.data_i(join_i)
+            		,.data_i(first_i)
             		,.en_i(en_1)
-            		,.data_o(in1_out)
+            		,.data_o(first_o)
             		);
 
-
-	bsg_dff_en #(.width_p(64))
+	bsg_dff_en #(.width_p(32))
 		in2     (.clock_i(clk_i)
-            		,.data_i(join_i)
+            		,.data_i(second_i)
             		,.en_i(en_2)
-            		,.data_o(in2_out)
+            		,.data_o(second_o)
             		);
 
-	bsg_dff_en #(.width_p(64))
-		in3     (.clock_i(clk_i)
-            		,.data_i(join_i)
-            		,.en_i(en_3)
-            		,.data_o(in3_out)
-            		);
 
-	bsg_dff_en #(.width_p(64))
-		in4     (.clock_i(clk_i)
-            		,.data_i(join_i)
-            		,.en_i(en_4)
-            		,.data_o(in4_out)
-            		);
+bsg_dff_en #(.width_p(2))
+   state_thingy(.clock_i(clk_i)
+   ,.data_i(state_next)
+    ,.en_i(1'b1)
+   ,.data_o(state)
+    );
 
-	always_ff @(posedge clk_i) begin
-		if (reset_i) begin 
-			state <=  WAIT;
-		end else if (en_i) begin
-			state <= state_n;
-		end else begin
-			state <= state;
-		end
-	end
 
-	always_comb begin        
+
+	always_comb 
+		
+		begin        
 		case(state)
-			WAIT: begin
-				ready_o = 1'b1;
-				v_o = 1'b0;
-				en_1 = 1'b0;
-				en_2 = 1'b0;
-				en_3 = 1'b0;
-				en_4 = 1'b0;
-				if (v_i) begin
-					state_n = IN1;
-				end
-			end
-	
 			IN1: begin
 				ready_o = 1'b1;
 				v_o = 1'b0;
 				en_1 = 1'b1;
 				en_2 = 1'b0;
-				en_3 = 1'b0;
-				en_4 = 1'b0;
-				if (v_i) begin
-					state_n = IN2;
-				end
 			end
 
 			IN2: begin
         			ready_o = 1'b1;
         			v_o = 1'b0;
 				en_1 = 1'b0;
-        			en_2 = 1'b1;
-				en_3 = 1'b0;		
-				en_4 = 1'b0;
-				if (v_i) begin
-					state_n = IN3;
-				end
-        		end
-
-			IN3: begin
-        			ready_o = 1'b1;
-        			v_o = 1'b0;
-				en_1 = 1'b0;
-				en_2 = 1'b0;
-        			en_3 = 1'b1;
-				en_4 = 1'b0;
-				if (v_i) begin
-					state_n = IN4;
-				end
-        		end
-
-
-			IN4: begin
-        			ready_o = 1'b1;
-        			v_o = 1'b0;
-				en_1 = 1'b0;	
-				en_2 = 1'b0;
-				en_3 = 1'b0;
-        			en_4 = 1'b1;
-				if (v_i) begin
-					state_n = DONE;
-				end
+        			en_2 = 1'b1;		
         		end
 
 			DONE: begin
@@ -154,15 +94,38 @@ module bsg_assembler
 				v_o = 1'b1;
 				en_1 = 1'b0;
         			en_2 = 1'b0;
-        			en_3 = 1'b0;
-        			en_4 = 1'b0;
-				data_o = {in4_out,in3_out,in2_out,in1_out};
-				if (v_i & yumi_i) begin
-					state_n = IN1;
-				end
+			assign	data_o = {second_o,first_o};
 			end
 		endcase
 	end
+always @(*)
+        begin
+
+        if(reset_i==1)
+	       
+         	state_next = IN1;
+		
+        else
+                begin
+                        state_next = state;
+                case
+                        (state)
+			
+			
+                        IN1:
+                                if( v_i == 1'b1 )
+                                        state_next = IN2;
+                        IN2 :
+                                if(v_i == 1'b1)
+                                        state_next = DONE;
+                        DONE:
+                                if(yumi_i & v_i)
+                                        state_next = IN1;
+endcase
+end
+end
 endmodule
+
+
 
 
