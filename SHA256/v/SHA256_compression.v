@@ -59,8 +59,7 @@ module SHA256_compression
 	assign sum_wt_kt_ch_H_s1_maj = sum_wt_kt_ch_H_s1 + maj_o;
 	assign sum_wt_kt_ch_H_s1_maj_s0 = sum_wt_kt_ch_H_s1_maj + sigma_0_o;
 
-	assign digest_o = {sum_wt_kt_ch_H_s1_maj_s0, A, B, C, sum_wt_kt_ch_H_s1_D
-			  , E, F, G};
+	assign digest_o = {G, F, E, sum_wt_kt_ch_H_s1_D, C, B, A, sum_wt_kt_ch_H_s1_maj_s0};
 endmodule
 
 // The choose function which choose the output based on E.
