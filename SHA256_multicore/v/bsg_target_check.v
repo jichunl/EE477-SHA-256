@@ -75,7 +75,7 @@ always @(*)
                                 if(ready_o == 1'b0)
                                         state_next = DONE;
                         DONE:
-                                if(yumi_i & v_i)
+                                if(v_i)
                                         state_next = WAIT;
 endcase
 end

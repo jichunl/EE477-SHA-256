@@ -14,7 +14,7 @@ module SHA256_node #(parameter ring_width_p = "inv", parameter id_p="inv")
 	,input	[ring_width_p-1:0] 	data_i
 	,output	logic			ready_o
 	,output logic			v_o
-	,output [ring_width_p-1:0]	data_o
+	,output logic [ring_width_p-1:0]	data_o
 	);							
 
 	logic	core_ready_o, core_v_i, core_yumi_i, core1_v_o, core_en_i
@@ -58,7 +58,6 @@ logic flash;
 	bitcoinSHA256_core	
 		first_sha	(.clk_i(clk_i)
 				,.reset_i(reset_i)
-				,.reset2_i(flash)
 				,.en_i(core1_en_i)
 				,.v_i(assembler_v_o)
 				,.yumi_i(core2_ready_o)
@@ -97,7 +96,7 @@ logic flash;
 
 		
 
-assign data_o = check;
+//assign data_o = check;
 
 	
 	
@@ -171,11 +170,12 @@ assign data_o = check;
 				core2_en_i = 1'b0;
 				flash = 1'b1;
 				end
-				else
+				else if(check == 1'b1 | overflow == 1'b1)
 				begin	
 				ready_o = 1'b0;
                                 v_o     = 1'b1;
 				 counter_en_i = 1'b0;
+				data_o = nonce;
 				end
 				end
 		endcase
@@ -203,7 +203,7 @@ assign data_o = check;
 						state_next = CALC3;
 				end
 				CALC3: begin
-					        if(target_v_o == 1'b1)
+					        if(target_v_o == 1'b1 | overflow == 1'b1)
                                                 state_next = DONE;
                                 end
 

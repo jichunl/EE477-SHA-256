@@ -13,8 +13,7 @@
 //
 // Last modified on :	Tue Feb 27 15:11:23 2018
 module SHA256_pre_processing
-	(input		[127:0]	msg_i
-	,input		en_i	
+	(input		[127:0]	msg_i	
 	,output		[511:0]	pre_proc_o
 	);
 

@@ -157,12 +157,15 @@ module bitcoinSHA256_core2 #(parameter core_id = "inv")
 			end
 
 			eDone: begin
-				if (yumi_i) begin
+			
+					  ready_o = 1'b0;
+                                        v_o = 1'b1;
+					if (yumi_i) begin
 					state_n = eWait;
 					ctr_en = 1'b0;
 					ctr_reset = 1'b1;
-					ready_o = 1'b0;
-                                        v_o = 1'b1;
+			//		ready_o = 1'b0;
+                         //               v_o = 1'b1;
 				end
 			end
 

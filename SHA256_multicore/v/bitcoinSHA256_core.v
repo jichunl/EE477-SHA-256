@@ -26,7 +26,6 @@
 module bitcoinSHA256_core #(parameter core_id = "inv")
 	(input 				clk_i
 	,input 				reset_i
-	,input				reset2_i
 	,input 				en_i
 	,input 				v_i
 	,input 				yumi_i
@@ -81,7 +80,6 @@ module bitcoinSHA256_core #(parameter core_id = "inv")
 	SHA256_pre_processing
 		pre_proc(.msg_i(padder_i)
 			,.pre_proc_o(block)
-			,.en_i(order_i)
 			);
 
 	SHA256_Kt_mem
@@ -114,7 +112,7 @@ module bitcoinSHA256_core #(parameter core_id = "inv")
 //
 
 	always @(posedge clk_i) begin
-		if (reset_i|reset2_i) begin
+		if (reset_i) begin
 			state_r <= eWait;
 			msg_r <= 256'b0;
 		end else begin
@@ -124,7 +122,7 @@ module bitcoinSHA256_core #(parameter core_id = "inv")
 	end
 	
     	always_ff @(posedge clk_i) begin
-        	if (reset_i | ctr_reset | reset2_i) begin
+        	if (reset_i | ctr_reset) begin
              		cycle_counter = 7'b0;
         	end else if (ctr_en) begin
             		cycle_counter = cycle_counter + 1'b1;
@@ -165,12 +163,15 @@ module bitcoinSHA256_core #(parameter core_id = "inv")
 			end
 
 			eDone: begin
+				   ready_o = 1'b0;
+                                        v_o = 1'b1;
+
 				if (yumi_i) begin
 					state_n = eWait;
 					ctr_en = 1'b0;
 					ctr_reset = 1'b1;
-					ready_o = 1'b0;
-                                        v_o = 1'b1;
+				//	ready_o = 1'b0;
+                                 //       v_o = 1'b1;
 				end
 			end
 

@@ -19,7 +19,7 @@
 module SHA256_message_scheduler
     (input  [511:0]	M_i 
     ,input		clk_i
-    ,input		reset_i    
+    ,input		reset_i   
     ,input		init_i
     ,output [31:0]	Wt_o 
     );
